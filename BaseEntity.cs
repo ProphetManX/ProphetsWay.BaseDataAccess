@@ -1,6 +1,9 @@
-﻿namespace ProphetsWay.BaseDataAccess
+﻿using System;
+
+namespace ProphetsWay.BaseDataAccess
 {
-	public class BaseEntity
+    [Serializable]
+    public class BaseEntity
 	{
 
 	}
