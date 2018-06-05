@@ -14,6 +14,12 @@ namespace ProphetsWay.BaseDataAccess
 
 		T Get<T>(int id) where T : BaseEntity, new();
 
+		int Update<T>(T entity) where T : BaseEntity, new ();
+
+		void Insert<T>(T entity) where T : BaseEntity, new ();
+
+		//I might Add a delete function here, but not until I come across a use case scenario
+
 		IList<T> GetAll<T>(T item) where T : BaseEntity, new();
 
 		void TransactionStart();

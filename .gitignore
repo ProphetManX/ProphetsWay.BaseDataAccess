@@ -4,3 +4,12 @@
 
 /bin/Debug/netstandard1.4
 /obj
+/bin/Release/netstandard1.4/Newtonsoft.Json.dll
+/bin/Release/netstandard1.4/Newtonsoft.Json.xml
+/bin/Release/netstandard1.4/ProphetsWay.BaseDataAccess.deps.json
+/bin/Release/netstandard1.4/ProphetsWay.BaseDataAccess.dll
+/bin/Release/netstandard1.4/ProphetsWay.BaseDataAccess.pdb
+/bin/Release/netstandard1.4/ProphetsWay.Utilities.dll
+/bin/Release/netstandard1.4/ProphetsWay.Utilities.pdb
+/bin/Release/netstandard1.4/protobuf-net.dll
+/bin/Release/netstandard1.4/protobuf-net.xml
