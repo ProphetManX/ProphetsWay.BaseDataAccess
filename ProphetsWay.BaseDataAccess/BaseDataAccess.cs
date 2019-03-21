@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace ProphetsWay.BaseDataAccess
 {
+    /// <summary>
+    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
+    /// </summary>
     public abstract class BaseDataAccess : IBaseDataAccess
     {
         public IList<T> GetAll<T>() where T : IBaseDDLEntity, new()
@@ -38,6 +41,9 @@ namespace ProphetsWay.BaseDataAccess
         public abstract void TransactionStart();
     }
 
+    /// <summary>
+    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
+    /// </summary>
     public abstract class BaseDataAccessInt : BaseDataAccess, IBaseDataAccessInt
     {
         /// <summary>
@@ -63,6 +69,9 @@ namespace ProphetsWay.BaseDataAccess
         }
     }
 
+    /// <summary>
+    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
+    /// </summary>
     public abstract class BaseDataAccessLong : BaseDataAccess, IBaseDataAccessLong
     {
         /// <summary>
