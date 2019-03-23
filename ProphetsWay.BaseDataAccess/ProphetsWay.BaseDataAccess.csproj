@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net40;net45;net451;net452;net46;net461;net471;netstandard2.0;netcoreapp2.2;netcoreapp2.1;netcoreapp2.0;</TargetFrameworks>
+		<RootNamespace>ProphetsWay.BaseDataAccess</RootNamespace>
+		<AssemblyName>ProphetsWay.BaseDataAccess</AssemblyName>
+		<ApplicationIcon />
+		<Win32Resource />
+		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+		<SignAssembly>false</SignAssembly>
+		<Authors>G. Gordon Nasseri</Authors>
+		<Company>ProphetsWay</Company>
+		<Description>
+A group of interfaces to define any/all interactions required for a Data Access Layer (DAL).  
+
+This can be used with any implementation of a DAL that you like, and allows for proper decoupling of the DAL from your business logic.  The purpose is to allow a completely new DAL implementation to be constructed, and then replace the current one with minimal impact to the business logic layers of the system.
+
+Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more information.
+		</Description>
+	</PropertyGroup>
+
+</Project>

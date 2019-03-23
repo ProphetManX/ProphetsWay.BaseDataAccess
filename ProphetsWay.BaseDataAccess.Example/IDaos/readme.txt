@@ -1,0 +1,2 @@
+﻿this folder is used to identify what type of interfaces you want to require for each Model/Entity
+this example has 3 entities, each has their own IDao, which inherit a different IBaseDao for some basic specific functionality
