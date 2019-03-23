@@ -5,6 +5,7 @@ using Xunit;
 using System.Linq;
 using ProphetsWay.BaseDataAccess.Example;
 using System.Collections.Generic;
+using System;
 
 namespace ProphetsWay.BaseDataAccess.Tests
 {
@@ -109,11 +110,11 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public delegate void Assertion(IList<Job> all);
         public static Assertion SetupShouldGetAllJobs(IExampleDataAccess da)
         {
-            var co = new Job { Name = "Eric" };
+            var co = new Job { Name = $"Eric {DateTime.Now.Ticks}" };
             da.Insert(co);
-            var co1 = new Job { Name = "Sam" };
+            var co1 = new Job { Name = $"Sam {DateTime.Now.Ticks}" };
             da.Insert(co1);
-            var co2 = new Job { Name = "Jim" };
+            var co2 = new Job { Name = $"Jim {DateTime.Now.Ticks}" };
             da.Insert(co2);
 
             return (IList<Job> all) =>
