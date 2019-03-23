@@ -6,6 +6,14 @@ using ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos;
 
 namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject
 {
+    /// <summary>
+    /// This is the main entry point for the DAL implementation.  In this example, each of the individual DAOs 
+    /// are created internally and each call is mapped to the internal DAO
+    /// This class has hardly any functional/logical code within it
+    /// 
+    /// If you choose to do so, you can put all your actual code within this one file and not bother with each separate DAO
+    /// but that is not recommended
+    /// </summary>
     public class ExampleDataAccess : BaseDataAccessInt, IExampleDataAccess
     {
         private readonly ICompanyDao _companyDao = new CompanyDao();
@@ -50,6 +58,11 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject
         public IList<Job> GetAll(Job item)
         {
             return _jobDao.GetAll(item);
+        }
+
+        public int GetCount(Company item)
+        {
+            return _companyDao.GetCount(item);
         }
 
         public Company GetCustomCompanyFunction(int id)

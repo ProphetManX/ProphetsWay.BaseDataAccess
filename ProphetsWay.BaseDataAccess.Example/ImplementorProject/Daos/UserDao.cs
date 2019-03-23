@@ -8,6 +8,7 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
     {
         public void CustomUserFunctionality(User user)
         {
+            //this example function is silly, but just used to illustrate some sort of custom query/function in your DAL
             DataStore.Users[user.Id].Whatever = "custom functionality triggered";
         }
 
@@ -27,7 +28,10 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
 
         public void Insert(User item)
         {
-            item.Id = DataStore.Users.Keys.Max() + 1;
+            item.Id = DataStore.Users.Keys.Count > 0
+                ? DataStore.Users.Keys.Max() + 1
+                : 1;
+
             DataStore.Users.Add(item.Id, item);
         }
 

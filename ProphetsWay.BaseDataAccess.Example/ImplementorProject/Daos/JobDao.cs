@@ -28,7 +28,10 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
 
         public void Insert(Job item)
         {
-            item.Id = DataStore.Jobs.Keys.Max() + 1;
+            item.Id = DataStore.Jobs.Keys.Count > 0
+                ? DataStore.Jobs.Keys.Max() + 1
+                : 1;
+
             DataStore.Jobs.Add(item.Id, item);
         }
 

@@ -24,7 +24,7 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
         public Company GetCustomCompanyFunction(int id)
         {
             var index = id % DataStore.Companies.Count;
-            return DataStore.Companies[index];
+            return DataStore.Companies.Values.Skip(index).First();
         }
 
         public IList<Company> GetPaged(Company item, int skip, int take)
@@ -34,8 +34,15 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
 
         public void Insert(Company item)
         {
-            item.Id = DataStore.Companies.Keys.Max() + 1;
+            item.Id = DataStore.Companies.Keys.Count > 0 
+                ? DataStore.Companies.Keys.Max() + 1 
+                : 1;
             DataStore.Companies.Add(item.Id, item);
+        }
+
+        public int GetCount(Company item)
+        {
+            return DataStore.Companies.Count;
         }
 
         public int Update(Company item)

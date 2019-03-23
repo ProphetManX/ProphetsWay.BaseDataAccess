@@ -24,7 +24,8 @@ namespace ProphetsWay.BaseDataAccess
         public IList<T> GetPaged<T>(int skip, int take) where T : IBaseEntity, new()
         {
             var tType = typeof(T);
-            var mtd = GetType().GetMethod("GetPaged", new[] { tType });
+            var iType = typeof(int);
+            var mtd = GetType().GetMethod("GetPaged", new[] { tType , iType, iType });
 
             if (mtd == null)
                 throw new Exception($"Unable to find a 'GetPaged' method for the type [{typeof(T).Name}] specified.");
@@ -32,6 +33,19 @@ namespace ProphetsWay.BaseDataAccess
             var input = new T();
 
             return mtd.Invoke(this, new object[] { input, skip, take }) as IList<T>;
+        }
+
+        public int GetCount<T>() where T : IBaseEntity, new()
+        {
+            var tType = typeof(T);
+            var mtd = GetType().GetMethod("GetCount", new[] { tType });
+
+            if (mtd == null)
+                throw new Exception($"Unable to find a 'GetCount' method for the type [{typeof(T).Name}] specified.");
+
+            var input = new T();
+
+            return (int)mtd.Invoke(this, new object[] { input });
         }
 
         public abstract void TransactionCommit();

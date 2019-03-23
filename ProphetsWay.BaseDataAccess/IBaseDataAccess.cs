@@ -8,16 +8,22 @@ namespace ProphetsWay.BaseDataAccess
 	public interface IBaseDataAccess
 	{
         /// <summary>
-        /// A global version of 'GetAll' that can be impelemented in your base DAL class,
+        /// A global version of 'GetAll' that can be implemented in your base DAL class,
         /// Allows for a simple get all call without instantiating an empty object first.
         /// </summary>
         IList<T> GetAll<T>() where T : IBaseDDLEntity, new();
 
         /// <summary>
-        /// A global version of 'GetPaged' that can be impelemented in your base DAL class,
+        /// A global version of 'GetPaged' that can be implemented in your base DAL class,
         /// Allows for a simple get paged call without instantiating an empty object first.
         /// </summary>
         IList<T> GetPaged<T>(int skip, int take) where T : IBaseEntity, new();
+
+        /// <summary>
+        /// A global version of 'GetCount' that can be implemented in your base DAL class,
+        /// Allows for a simple get count call without instantiating an empty object first.
+        /// </summary>
+        int GetCount<T>() where T : IBaseEntity, new();
 
         /// <summary>
         /// Gives access outside of the DAL to start a transaction,

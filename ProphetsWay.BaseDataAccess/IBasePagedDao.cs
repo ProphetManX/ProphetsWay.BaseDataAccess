@@ -14,5 +14,12 @@ namespace ProphetsWay.BaseDataAccess
         /// <param name="skip">The amount of records to skip.</param>
         /// <param name="take">The amount of records to take.</param>
         IList<T> GetPaged(T item, int skip, int take);
+
+        /// <summary>
+        /// To be used in conjunction with your front end when doing a paged view/subset of items,
+        /// you will need to know the upper boundary for your paging display 
+        /// </summary>
+        /// <param name="item">A Typed object to specify which DAO this call belongs to.</param>
+        int GetCount(T item);
     }
 }

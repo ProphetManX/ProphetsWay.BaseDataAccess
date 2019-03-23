@@ -12,6 +12,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		CHANGELOG.md = CHANGELOG.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.BaseDataAccess.Tests", "ProphetsWay.BaseDataAccess.Tests\ProphetsWay.BaseDataAccess.Tests.csproj", "{729E752C-DA06-46ED-AE8E-4B355965B817}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,6 +28,10 @@ Global
 		{F41593D8-5FBE-41DD-852D-B86F5BE55F52}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F41593D8-5FBE-41DD-852D-B86F5BE55F52}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F41593D8-5FBE-41DD-852D-B86F5BE55F52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{729E752C-DA06-46ED-AE8E-4B355965B817}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{729E752C-DA06-46ED-AE8E-4B355965B817}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{729E752C-DA06-46ED-AE8E-4B355965B817}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{729E752C-DA06-46ED-AE8E-4B355965B817}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
