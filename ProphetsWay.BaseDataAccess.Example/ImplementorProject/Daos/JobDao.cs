@@ -9,13 +9,16 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
     {
         public int Delete(Job item)
         {
-            DataStore.Jobs.Remove(item.Id);
+            lock (DataStore.Jobs)
+                DataStore.Jobs.Remove(item.Id);
+
             return 1;
         }
 
         public Job Get(Job item)
         {
-            if (DataStore.Jobs.ContainsKey(item.Id))
+            lock (DataStore.Jobs)
+                if (DataStore.Jobs.ContainsKey(item.Id))
                 return DataStore.Jobs[item.Id];
 
             return null;
@@ -23,16 +26,20 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject.Daos
 
         public IList<Job> GetAll(Job item)
         {
-            return DataStore.Jobs.Values.ToList();
+            lock (DataStore.Jobs)
+                return DataStore.Jobs.Values.ToList();
         }
 
         public void Insert(Job item)
         {
-            item.Id = DataStore.Jobs.Keys.Count > 0
+            lock (DataStore.Jobs)
+            {
+                item.Id = DataStore.Jobs.Keys.Count > 0
                 ? DataStore.Jobs.Keys.Max() + 1
                 : 1;
 
-            DataStore.Jobs.Add(item.Id, item);
+                DataStore.Jobs.Add(item.Id, item);
+            }
         }
 
         public int Update(Job item)
