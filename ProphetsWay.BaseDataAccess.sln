@@ -10,9 +10,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0452F8F6-E7AF-46D0-AD85-3CB6AF10EE1D}"
 	ProjectSection(SolutionItems) = preProject
 		CHANGELOG.md = CHANGELOG.md
+		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.BaseDataAccess.Tests", "ProphetsWay.BaseDataAccess.Tests\ProphetsWay.BaseDataAccess.Tests.csproj", "{729E752C-DA06-46ED-AE8E-4B355965B817}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.BaseDataAccess.Tests", "ProphetsWay.BaseDataAccess.Tests\ProphetsWay.BaseDataAccess.Tests.csproj", "{729E752C-DA06-46ED-AE8E-4B355965B817}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
