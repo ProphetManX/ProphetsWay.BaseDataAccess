@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net40;net45;net451;net452;net46;net461;net471;netstandard2.0;netcoreapp2.2;netcoreapp2.1;netcoreapp2.0;</TargetFrameworks>
@@ -17,6 +17,28 @@ This can be used with any implementation of a DAL that you like, and allows for 
 
 Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more information.
 		</Description>
+
+    <!-- Assembly Override Properties -->
+    <PackageRequireLicenseAcceptance />
+    <PackageId />
+    <Version />
+    <Authors />
+    <Company />
+    <Product />
+
+    <Copyright />
+    <PackageLicenseUrl />
+    <PackageProjectUrl />
+    <PackageIconUrl />
+    <RepositoryUrl />
+    <RepositoryType />
+    <PackageTags />
+    <PackageReleaseNotes />
+    <NeutralLanguage />
+    <AssemblyVersion />
+    <FileVersion />
+    <InformationalVersion />
+    
 	</PropertyGroup>
 
 </Project>
