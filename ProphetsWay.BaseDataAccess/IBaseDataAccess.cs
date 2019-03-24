@@ -11,7 +11,7 @@ namespace ProphetsWay.BaseDataAccess
         /// A global version of 'GetAll' that can be implemented in your base DAL class,
         /// Allows for a simple get all call without instantiating an empty object first.
         /// </summary>
-        IList<T> GetAll<T>() where T : IBaseDDLEntity;
+        IList<T> GetAll<T>() where T : IBaseEntity;
 
         /// <summary>
         /// A global version of 'GetPaged' that can be implemented in your base DAL class,

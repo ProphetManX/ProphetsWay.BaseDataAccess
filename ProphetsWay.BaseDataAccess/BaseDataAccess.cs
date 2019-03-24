@@ -7,7 +7,7 @@ namespace ProphetsWay.BaseDataAccess
     /// </summary>
     public abstract class BaseDataAccess : IBaseDataAccess
     {
-        public virtual IList<T> GetAll<T>() where T : IBaseDDLEntity
+        public virtual IList<T> GetAll<T>() where T : IBaseEntity
         {
             var mtd = this.GetMethodByNameForType<T>("GetAll");
             return mtd.Invoke(this, new object[] { null }) as IList<T>;
