@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ProphetsWay.BaseDataAccess.Example.IDaos
 {
-    public interface IJobDao : IBaseDDLDao<Job>
+    public interface IJobDao : IBaseGetAllDao<Job>
     {
 
     }
