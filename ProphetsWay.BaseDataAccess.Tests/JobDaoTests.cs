@@ -24,7 +24,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldInsertJob()
         {
             //setup
-            var co = new Job { Name = "Bob" };
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
 
             //act
             _da.Insert(co);
@@ -36,7 +36,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public delegate void GetAssertion(Job co);
         public static (int JobId, GetAssertion Assertion) SetupShouldGetUser(IExampleDataAccess da)
         {
-            var co = new Job { Name = "Bob" };
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
             da.Insert(co);
 
             return (co.Id, (Job co2) =>
@@ -64,7 +64,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         {
             //setup
             const string editText = "blarg";
-            var co = new Job { Name = "Bob" };
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
             _da.Insert(co);
 
             //act
@@ -82,8 +82,8 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldDeleteJob()
         {
             //setup
-            var co = new Job { Name = "Bob" };
-            _da.Insert(co);
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
+            _da.Insert(co); 
 
             //act
             var count = _da.Delete(co);
@@ -110,11 +110,11 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public delegate void Assertion(IList<Job> all);
         public static Assertion SetupShouldGetAllJobs(IExampleDataAccess da)
         {
-            var co = new Job { Name = $"Eric {DateTime.Now.Ticks}" };
+            var co = new Job { Name = $"Eric {Guid.NewGuid()}" };
             da.Insert(co);
-            var co1 = new Job { Name = $"Sam {DateTime.Now.Ticks}" };
+            var co1 = new Job { Name = $"Sam {Guid.NewGuid()}" };
             da.Insert(co1);
-            var co2 = new Job { Name = $"Jim {DateTime.Now.Ticks}" };
+            var co2 = new Job { Name = $"Jim {Guid.NewGuid()}" };
             da.Insert(co2);
 
             return (IList<Job> all) =>

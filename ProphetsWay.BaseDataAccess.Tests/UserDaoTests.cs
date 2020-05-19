@@ -3,6 +3,7 @@ using ProphetsWay.BaseDataAccess.Example.ImplementorProject;
 using FluentAssert;
 using Xunit;
 using ProphetsWay.BaseDataAccess.Example;
+using System;
 
 namespace ProphetsWay.BaseDataAccess.Tests
 {
@@ -21,7 +22,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldInsertUser()
         {
             //setup
-            var co = new User { Name = "Bob" };
+            var co = new User { Name = $"Bob {Guid.NewGuid()}" };
 
             //act
             _da.Insert(co);
@@ -33,7 +34,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public delegate void GetAssertion(User co);
         public static (int UserId, GetAssertion Assertion) SetupShouldGetUser(IExampleDataAccess da)
         {
-            var co = new User { Name = "Bob" };
+            var co = new User { Name = $"Bob {Guid.NewGuid()}" };
             da.Insert(co);
 
             return (co.Id, (User co2) =>
@@ -61,7 +62,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         {
             //setup
             const string editText = "blarg";
-            var co = new User { Name = "Bob" };
+            var co = new User { Name = $"Bob {Guid.NewGuid()}" };
             _da.Insert(co);
 
             //act
@@ -79,7 +80,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldDeleteUser()
         {
             //setup
-            var co = new User { Name = "Bob" };
+            var co = new User { Name = $"Bob {Guid.NewGuid()}" };
             _da.Insert(co);
 
             //act
@@ -95,7 +96,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldGetCustomFunctionality()
         {
             //setup
-            var co = new User { Name = "Eric" };
+            var co = new User { Name = $"Eric {Guid.NewGuid()}" };
             _da.Insert(co);
             var currWhatever = co.Whatever;
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ProphetsWay.BaseDataAccess
 {
@@ -46,8 +47,24 @@ namespace ProphetsWay.BaseDataAccess
 
     /// <summary>
     /// An interface to define some basic calls your Base DAL should have accessible.
+    /// Adds a nice shortcut method for your TIdType based index key, inherits IBaseDataAccess
+    /// </summary>
+    public interface IBaseDataAccess<TIdType> : IBaseDataAccess
+    {
+        /// <summary>
+        /// A global version of 'Get' that can be implemented in your base DAL class,
+        /// Allows for a simple get call without instantiating an object and 
+        /// manually setting the ID field everywhere used in your business logic layers.
+        /// Implies your ID properties are of type TIdType.
+        /// </summary>
+        TEntityType Get<TEntityType>(TIdType id) where TEntityType : IBaseEntity, new();
+    }
+
+    /// <summary>
+    /// An interface to define some basic calls your Base DAL should have accessible.
     /// Adds a nice shortcut method if you're using an "int" based index key, inherits IBaseDataAccess
     /// </summary>
+    [Obsolete("No longer necessary, please use IBaseDataAccess<TIdType> instead.")]
     public interface IBaseDataAccessInt : IBaseDataAccess
     {
         /// <summary>
@@ -63,6 +80,7 @@ namespace ProphetsWay.BaseDataAccess
     /// An interface to define some basic calls your Base DAL should have accessible.
     /// Adds a nice shortcut method if you're using an "long" based index key
     /// </summary>
+    [Obsolete("No longer necessary, please use IBaseDataAccess<TIdType> instead.")]
     public interface IBaseDataAccessLong : IBaseDataAccess
     {
         /// <summary>
