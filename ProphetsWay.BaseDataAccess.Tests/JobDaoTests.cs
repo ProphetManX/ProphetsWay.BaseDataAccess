@@ -24,7 +24,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldInsertJob()
         {
             //setup
-            var co = new Job { Name = "Bob" };
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
 
             //act
             _da.Insert(co);
@@ -36,7 +36,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public delegate void GetAssertion(Job co);
         public static (int JobId, GetAssertion Assertion) SetupShouldGetUser(IExampleDataAccess da)
         {
-            var co = new Job { Name = "Bob" };
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
             da.Insert(co);
 
             return (co.Id, (Job co2) =>
@@ -64,7 +64,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
         {
             //setup
             const string editText = "blarg";
-            var co = new Job { Name = "Bob" };
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
             _da.Insert(co);
 
             //act
@@ -82,8 +82,8 @@ namespace ProphetsWay.BaseDataAccess.Tests
         public void ShouldDeleteJob()
         {
             //setup
-            var co = new Job { Name = "Bob" };
-            _da.Insert(co);
+            var co = new Job { Name = $"Bob {Guid.NewGuid()}" };
+            _da.Insert(co); 
 
             //act
             var count = _da.Delete(co);
