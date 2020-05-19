@@ -14,7 +14,7 @@ namespace ProphetsWay.BaseDataAccess.Example.ImplementorProject
     /// If you choose to do so, you can put all your actual code within this one file and not bother with each separate DAO
     /// but that is not recommended
     /// </summary>
-    public class ExampleDataAccess : BaseDataAccessInt, IExampleDataAccess
+    public class ExampleDataAccess : BaseDataAccess<int>, IExampleDataAccess
     {
         private readonly ICompanyDao _companyDao = new CompanyDao();
         private readonly IJobDao _jobDao = new JobDao();
