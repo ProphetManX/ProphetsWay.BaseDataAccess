@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ProphetsWay.BaseDataAccess
 {
@@ -37,6 +38,21 @@ namespace ProphetsWay.BaseDataAccess
     /// <summary>
     /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
     /// </summary>
+    public abstract class BaseDataAccess<TIdType> : BaseDataAccess, IBaseDataAccess<TIdType>
+    {
+        /// <summary>
+        /// Assumes that your ID property on your entities is either named "Id" or "EntityTypeNameId"
+        /// </summary>
+        public virtual T Get<T>(TIdType id) where T : IBaseEntity, new()
+        {
+            return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
+        }
+    }
+
+    /// <summary>
+    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
+    /// </summary>
+    [Obsolete("No longer necessary, please use BaseDataAccess<TIdType> instead.")]
     public abstract class BaseDataAccessInt : BaseDataAccess, IBaseDataAccessInt
     {
         /// <summary>
@@ -51,6 +67,7 @@ namespace ProphetsWay.BaseDataAccess
     /// <summary>
     /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
     /// </summary>
+    [Obsolete("No longer necessary, please use BaseDataAccess<TIdType> instead.")]
     public abstract class BaseDataAccessLong : BaseDataAccess, IBaseDataAccessLong
     {
         /// <summary>
