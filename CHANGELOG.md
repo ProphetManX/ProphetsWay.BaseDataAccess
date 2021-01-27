@@ -1,3 +1,8 @@
+# v2.0.0
+Removed target frameworks that are not longer supported by Microsoft (netcoreapp2.0, netcoreapp2.2, netcoreapp3.0).
+Added target framework for .Net 5.0.
+
+
 # v1.1.1
 Added support for .Net Framework 4.8 explicitly and updated the changelog to include changes from v1.1.0.
 Updated ```IBaseDataAccessInt``` and ```IBaseDataAccessLong``` to implement the new ```IBaseDataAccess<T>```

@@ -59,26 +59,4 @@ namespace ProphetsWay.BaseDataAccess
 		/// </summary>
 		TEntityType Get<TEntityType>(TIdType id) where TEntityType : IBaseEntity, new();
 	}
-
-	/// <summary>
-	/// An interface to define some basic calls your Base DAL should have accessible.
-	/// Adds a nice shortcut method if you're using an "int" based index key, inherits IBaseDataAccess
-	/// </summary>
-	[Obsolete("No longer necessary, please use IBaseDataAccess<TIdType> instead.")]
-	public interface IBaseDataAccessInt : IBaseDataAccess<int>
-	{
-
-	}
-
-	/// <summary>
-	/// An interface to define some basic calls your Base DAL should have accessible.
-	/// Adds a nice shortcut method if you're using an "long" based index key
-	/// </summary>
-	[Obsolete("No longer necessary, please use IBaseDataAccess<TIdType> instead.")]
-	public interface IBaseDataAccessLong : IBaseDataAccess<long>
-	{
-
-	}
-
-
 }

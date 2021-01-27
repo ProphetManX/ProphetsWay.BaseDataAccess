@@ -1,0 +1,238 @@
+parameters:
+  vmImage: 'windows-latest'
+  repositoryName: 'NO_DEFAULT'
+  targetProject: 'NO_DEFAULT'
+  libraryName: 'NO_DEFAULT'
+  licenseUrl: 'NO_DEFAULT'
+  description: 'NO_DEFAULT'
+
+stages:
+  - stage: PullRequest
+    displayName: Pull Request Stage
+    condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
+    jobs:
+    - job: PrBuild
+      displayName: PR Build
+      pool:
+        vmImage: ${{parameters.vmImage}}
+      
+      steps:
+      - template: build-and-test.yml
+        parameters:
+          vmImage: ${{parameters.vmImage}}
+
+  - stage: Build
+    displayName: Build Stage
+    condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
+    variables:
+    - template: version-variables.yml
+
+    jobs:
+    - job: CiBuild
+      displayName: CI Build
+      pool:
+        vmImage: ${{parameters.vmImage}}
+
+      steps:
+      - task: Assembly-Info-NetCore@2
+        displayName: 'Set Assembly Info'
+        inputs:
+          Path: '$(Build.SourcesDirectory)'
+          FileNames: '${{parameters.targetProject}}'
+          InsertAttributes: true
+          FileEncoding: 'auto'
+          WriteBOM: false
+          PackageRequireLicenseAcceptance: true
+          PackageId: 'ProphetsWay.${{parameters.libraryName}}'
+          Authors: 'G. Gordon Nasseri'
+          Company: 'ProphetsWay'
+          Product: '${{parameters.libraryName}}'
+          Description: '${{parameters.description}}'
+          PackageLicenseUrl: '${{parameters.licenseUrl}}'
+          RepositoryUrl: 'https://github.com/ProphetManX/ProphetsWay.${{parameters.libraryName}}'
+          RepositoryType: 'GitHub'
+          VersionNumber: '$(SemanticVersion).$(Build.BuildId)'
+          FileVersionNumber: '$(SemanticVersion).$(Build.BuildId)'
+          InformationalVersion: '$(SemanticVersion)'
+          PackageVersion: '$(SemanticVersion)'
+          LogLevel: 'verbose'
+          FailOnWarning: false
+          DisableTelemetry: false
+
+      - template: build-and-test.yml
+        parameters:
+          vmImage: ${{parameters.vmImage}}
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Assemble Alpha NuGet Package'
+        inputs:
+          command: 'pack'
+          packagesToPack: '${{parameters.targetProject}}'
+          packDirectory: '$(Build.ArtifactStagingDirectory)\alpha'
+          versioningScheme: 'byEnvVar'
+          versionEnvVar: 'AlphaVersion'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Assemble Beta NuGet Package'
+        inputs:
+          command: 'pack'
+          packagesToPack: '${{parameters.targetProject}}'
+          packDirectory: '$(Build.ArtifactStagingDirectory)\beta'
+          versioningScheme: 'byEnvVar'
+          versionEnvVar: 'BetaVersion'
+
+      - task: DotNetCoreCLI@2
+        displayName: 'Assemble Release NuGet Package'
+        inputs:
+          command: 'pack'
+          packagesToPack: '${{parameters.targetProject}}'
+          packDirectory: '$(Build.ArtifactStagingDirectory)\release'
+          versioningScheme: 'byEnvVar'
+          versionEnvVar: 'SemanticVersion'
+
+      - task: CopyFiles@2
+        displayName: 'Copy Changelog to Staging'
+        inputs:
+          Contents: 'CHANGELOG.md'
+          TargetFolder: '$(Build.ArtifactStagingDirectory)\'
+
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Artifacts'
+        inputs:
+          PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+          ArtifactName: 'drop'
+          publishLocation: 'Container'
+
+  - stage: DeployAlpha
+    displayName: Deploy Alpha NuGet Package
+    dependsOn: Build
+    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    jobs:
+    - job: DeployAlpha
+      displayName: 'Deploy Alpha NuGet Package Job'
+      continueOnError: "true"
+      pool:
+        vmImage: ${{parameters.vmImage}}
+      steps:
+      - task: DownloadBuildArtifacts@0
+        displayName: Download Artifact
+        inputs:
+          buildType: 'current'
+          downloadType: 'single'
+          artifactName: 'drop'
+          downloadPath: '$(build.artifactstagingdirectory)'
+
+      - task: NuGetCommand@2
+        displayName: 'Push Alpha NuGet Package'
+        inputs:
+          command: 'push'
+          packagesToPush: '$(build.artifactstagingdirectory)/drop/alpha/*.nupkg'
+          nuGetFeedType: 'external'
+          publishFeedCredentials: 'ProphetManX''s NuGet'
+
+  - stage: DeployBeta
+    displayName: Deploy Beta NuGet Package
+    dependsOn: DeployAlpha
+    condition: and(succeeded('DeployAlpha'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    variables:
+    - template: version-variables.yml
+
+    jobs:
+    - deployment: DeployBeta
+      displayName: 'Deploy Beta NuGet Package Job'
+      continueOnError: "false"
+      pool:
+        vmImage: ${{parameters.vmImage}}
+      environment: '${{parameters.libraryName}} Beta NuGet'
+      strategy: 
+        runOnce:
+          deploy:
+            steps:
+            - task: DownloadBuildArtifacts@0
+              displayName: Download Artifact
+              inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: 'drop'
+                downloadPath: '$(build.artifactstagingdirectory)'
+
+            - task: GitHubRelease@1
+              displayName: 'Create GitHub Beta Release'
+              inputs:
+                gitHubConnection: 'ProphetsWay@GitHub'
+                repositoryName: '${{parameters.repositoryName}}'
+                action: 'create'
+                target: '$(Build.SourceVersion)'
+                tagSource: 'userSpecifiedTag'
+                tag: '$(BetaVersion)'
+                title: '$(BetaVersion)'
+                releaseNotesFilePath: '$(build.artifactstagingdirectory)/drop/changelog.md'
+                assets: '$(build.artifactstagingdirectory)/drop/beta/*.nupkg'
+                isPreRelease: true
+                changeLogCompareToRelease: 'lastFullRelease'
+                changeLogType: 'commitBased'
+
+            - task: NuGetCommand@2
+              displayName: 'Push Beta NuGet Package'
+              inputs:
+                command: 'push'
+                packagesToPush: '$(build.artifactstagingdirectory)/drop/beta/*.nupkg'
+                nuGetFeedType: 'external'
+                publishFeedCredentials: 'ProphetManX''s NuGet'
+
+  - stage: DeployRelease
+    displayName: Deploy Release NuGet Package
+    dependsOn: DeployBeta
+    condition: and(succeeded('DeployBeta'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    variables:
+    - template: version-variables.yml
+
+    jobs:
+    - deployment: DeployRelease
+      displayName: 'Deploy Release NuGet Package Job'
+      continueOnError: "false"
+      pool:
+        vmImage: ${{parameters.vmImage}}
+      environment: '${{parameters.libraryName}} Release NuGet'
+      strategy: 
+        runOnce:
+          deploy:
+            steps:
+            - task: DownloadBuildArtifacts@0
+              displayName: Download Artifact
+              inputs:
+                buildType: 'current'
+                downloadType: 'single'
+                artifactName: 'drop'
+                downloadPath: '$(build.artifactstagingdirectory)'
+
+            - task: GitHubRelease@1
+              displayName: 'Delete GitHub Beta Release'
+              inputs:
+                gitHubConnection: 'ProphetsWay@GitHub'
+                repositoryName: '${{parameters.repositoryName}}'
+                action: 'delete'
+                tag: '$(BetaVersion)'
+
+            - task: GitHubRelease@1
+              displayName: 'Create GitHub Release'
+              inputs:
+                gitHubConnection: 'ProphetsWay@GitHub'
+                repositoryName: '${{parameters.repositoryName}}'
+                action: 'create'
+                target: '$(Build.SourceVersion)'
+                tagSource: 'userSpecifiedTag'
+                tag: '$(SemanticVersion)'
+                title: '$(SemanticVersion)'
+                releaseNotesFilePath: '$(build.artifactstagingdirectory)/drop/changelog.md'
+                assets: '$(build.artifactstagingdirectory)/drop/release/*.nupkg'
+                changeLogCompareToRelease: 'lastFullRelease'
+                changeLogType: 'commitBased'
+
+            - task: NuGetCommand@2
+              displayName: 'Push Release NuGet Package'
+              inputs:
+                command: 'push'
+                packagesToPush: '$(build.artifactstagingdirectory)/drop/release/*.nupkg'
+                nuGetFeedType: 'external'
+                publishFeedCredentials: 'ProphetManX''s NuGet'
