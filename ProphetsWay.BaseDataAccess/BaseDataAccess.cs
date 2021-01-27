@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ProphetsWay.BaseDataAccess
 {
@@ -48,16 +47,4 @@ namespace ProphetsWay.BaseDataAccess
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
         }
     }
-
-    /// <summary>
-    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
-    /// </summary>
-    [Obsolete("No longer necessary, please use BaseDataAccess<TIdType> instead.")]
-    public abstract class BaseDataAccessInt : BaseDataAccess<int>, IBaseDataAccessInt { }
-
-    /// <summary>
-    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
-    /// </summary>
-    [Obsolete("No longer necessary, please use BaseDataAccess<TIdType> instead.")]
-    public abstract class BaseDataAccessLong : BaseDataAccess<long>, IBaseDataAccessLong { }
 }
