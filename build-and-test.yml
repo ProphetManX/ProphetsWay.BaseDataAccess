@@ -2,6 +2,8 @@ parameters:
   vmImage: 'windows-latest'
 
 steps:
+- checkout: self
+  submodules: true
 - task: DotNetCoreCLI@2
   displayName: 'Build Solution'
   inputs:
