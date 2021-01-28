@@ -47,13 +47,7 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 	</PropertyGroup>
 
 	<ItemGroup>
-	  <None Remove="profile.png" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Content Include="profile.png">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </Content>
+		<None Include="profile.png" Pack="true" PackagePath=""/>
 	</ItemGroup>
 
 </Project>
