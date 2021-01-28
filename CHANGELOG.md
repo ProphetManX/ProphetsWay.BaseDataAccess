@@ -1,4 +1,5 @@
 # v2.0.0
+### Updated to support .net 5.0
 Removed target frameworks that are not longer supported by Microsoft (netcoreapp2.0, netcoreapp2.2, netcoreapp3.0).
 Added target framework for .Net 5.0.
 
@@ -12,7 +13,7 @@ Updated ```BaseDataAccessInt``` and ```BaseDataAccessLong``` to implement the ne
 created in version v1.1.0 to cut down on duplicate code.
 
 Removed the Example projects and added a submodule pointing to [ProphetsWay.Example](https://github.com/ProphetManX/ProphetsWay.Example).
-ProphetsWay.Example referenes a NuGet reference to this project, albeit a slightly older version.
+ProphetsWay.Example references a NuGet reference to this project, albeit a slightly older version.
 
 
 
