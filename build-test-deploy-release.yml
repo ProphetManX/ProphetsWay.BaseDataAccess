@@ -50,6 +50,7 @@ stages:
           Description: '${{parameters.description}}'
           PackageLicenseUrl: '${{parameters.licenseUrl}}'
           RepositoryUrl: 'https://github.com/ProphetManX/ProphetsWay.${{parameters.libraryName}}'
+          PackageIconUrl: 'http://2.gravatar.com/avatar/b0d9dde03970c4cedf0023a86d169d11'
           RepositoryType: 'GitHub'
           VersionNumber: '$(SemanticVersion).$(Build.BuildId)'
           FileVersionNumber: '$(SemanticVersion).$(Build.BuildId)'
