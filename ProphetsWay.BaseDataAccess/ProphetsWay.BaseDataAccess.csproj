@@ -15,6 +15,7 @@
 		<SignAssembly>false</SignAssembly>
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>ProphetsWay</Company>
+		<PackageIcon>profile.png</PackageIcon>
 		<Description>
 A group of interfaces to define any/all interactions required for a Data Access Layer (DAL).  
 
@@ -44,5 +45,15 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 		<InformationalVersion />
 	
 	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Remove="profile.png" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="profile.png">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </Content>
+	</ItemGroup>
 
 </Project>
