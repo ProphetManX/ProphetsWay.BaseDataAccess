@@ -34,7 +34,8 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 		<Copyright />
 		<PackageLicenseUrl />
 		<PackageProjectUrl />
-		<PackageIconUrl />
+		<PackageIcon>profile.png</PackageIcon>
+		<PackageIconUrl>https://raw.githubusercontent.com/ProphetManX/ProphetsWay.BaseDataAccess/master/ProphetsWay.BaseDataAccess/profile.png</PackageIconUrl>
 		<RepositoryUrl />
 		<RepositoryType />
 		<PackageTags />
