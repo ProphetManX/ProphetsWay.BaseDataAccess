@@ -3,7 +3,9 @@
 Updated the root base interface/class to include the generic ```Get``` method, because it's possible the user would build
 a database where most records have an ```int``` primary key, but on one large transaction table you'd prefer to use ```long```
 and yet in another you'd want to use ```Guid``` so you can share the key across contexts.  The original implementation
-only allowed one type of primary key.
+only allowed one type of primary key.  Tagged the old methods as Obsolete, but using them will give you a warning, suggestion
+includes the note to simply remove the generic assignment.
+
 
 # v2.0.0
 ### Updated to support .net 5.0

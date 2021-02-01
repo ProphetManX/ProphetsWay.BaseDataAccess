@@ -52,4 +52,10 @@ namespace ProphetsWay.BaseDataAccess
 		/// </summary>
 		TEntityType Get<TEntityType, TIdType>(TIdType id) where TEntityType : IBaseEntity, new() where TIdType : struct;
 	}
+
+	[Obsolete("You no longer need to use this Generic type of IBaseDataAccess, you can use the normal IBaseDataAccess. (just remove the generic assignment)", false)]
+	public interface IBaseDataAccess<TIdType> : IBaseDataAccess
+	{
+
+	}
 }

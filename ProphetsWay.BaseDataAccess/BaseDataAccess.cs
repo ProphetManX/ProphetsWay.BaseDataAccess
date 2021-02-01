@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ProphetsWay.BaseDataAccess
 {
@@ -36,11 +37,17 @@ namespace ProphetsWay.BaseDataAccess
         /// <summary>
         /// Assumes that your ID property on your entities is either named "Id" or "EntityTypeNameId"
         /// </summary>
-        public T Get<T, TIdType>(TIdType id)
+        public virtual T Get<T, TIdType>(TIdType id)
             where T : IBaseEntity, new()
             where TIdType : struct
         {
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
         }
+    }
+
+    [Obsolete("You no longer need to use this Generic type of BaseDataAccess, you can use the normal BaseDataAccess. (just remove the generic assignment)", false)]    
+    public abstract class BaseDataAccess<TIdType> : BaseDataAccess, IBaseDataAccess<TIdType>
+    {
+
     }
 }
