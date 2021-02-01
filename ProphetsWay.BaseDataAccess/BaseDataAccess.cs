@@ -32,17 +32,13 @@ namespace ProphetsWay.BaseDataAccess
         public abstract void TransactionRollBack();
 
         public abstract void TransactionStart();
-    }
 
-    /// <summary>
-    /// Utilizes Reflection to identify which methods to call, if you prefer to manually check for the sake of speed, do not inherit this class
-    /// </summary>
-    public abstract class BaseDataAccess<TIdType> : BaseDataAccess, IBaseDataAccess<TIdType>
-    {
         /// <summary>
         /// Assumes that your ID property on your entities is either named "Id" or "EntityTypeNameId"
         /// </summary>
-        public virtual T Get<T>(TIdType id) where T : IBaseEntity, new()
+        public T Get<T, TIdType>(TIdType id)
+            where T : IBaseEntity, new()
+            where TIdType : struct
         {
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
         }

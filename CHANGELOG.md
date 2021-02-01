@@ -1,3 +1,10 @@
+# v2.1.0
+### Rolled up ```IBaseDataAccess<TIdType>```/```BaseDataAccess<TIdType>``` into their base classes
+Updated the root base interface/class to include the generic ```Get``` method, because it's possible the user would build
+a database where most records have an ```int``` primary key, but on one large transaction table you'd prefer to use ```long```
+and yet in another you'd want to use ```Guid``` so you can share the key across contexts.  The original implementation
+only allowed one type of primary key.
+
 # v2.0.0
 ### Updated to support .net 5.0
 Updated a few things, unfortunately it removed a little bit of functionality, so it counts as a major update, 
@@ -22,22 +29,22 @@ ProphetsWay.Example references a NuGet reference to this project, albeit a sligh
 
 
 # v1.1.0
-### New Interfaces IBaseIdEntity< T > and IBaseDataAccess< T >
+### New Interfaces ```IBaseIdEntity<T>``` and ```IBaseDataAccess<T>```
 For added functionality/flexibility, I added some code to specify the ID property of your entities, as well as its type.
 Then was able to refactor the BaseDataAccess classes to make use of these new features.
 
-Old classes are marked as Obsolete, but are still usabled, all changes are backwards compatible.
+Old classes are marked as Obsolete, but are still usable, all changes are backwards compatible.
 
-##### IBaseIdEntity< T >
+##### ```IBaseIdEntity<T>```
 Created a new optional interface, IBaseIdEntity, which inherits from IBaseEntity for backwards compatibility
 but this new interface will specify a property "Id" that must exist on your entities, and the type of the Id is 
 specified by the generic passed in.  In general its likely to be either int, long, or a Guid.
 
-##### IBaseDataAccess< T >
+##### ```IBaseDataAccess<T>```
 Created a new interface to replace the two older options ```IBaseDataAccessInt``` and ```IBaseDataAccessLong```.
 Now supports ```Guid``` id types.
 
-##### BaseDataAccess< TIdType >
+##### ```BaseDataAccess<TIdType>```
 Created a new base abstract class to replace the two older options ```BaseDataAccessInt``` and ```BaseDataAccessLong```.
 Now supports ```Guid``` id types.
 
