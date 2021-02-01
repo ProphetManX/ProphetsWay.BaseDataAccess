@@ -25,6 +25,5 @@ stages:
     targetProject: '**/ProphetsWay.BaseDataAccess.csproj'
     libraryName: 'BaseDataAccess'
     licenseUrl: 'https://opensource.org/licenses/MIT'
-    description: 'A group of interfaces (and a base class) to define many basic interactions required for a Data Access Layer (DAL).'
     
 
