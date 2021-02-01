@@ -50,7 +50,7 @@ namespace ProphetsWay.BaseDataAccess
 		/// manually setting the ID field everywhere used in your business logic layers.
 		/// Implies your ID properties are of type TIdType.
 		/// </summary>
-		TEntityType Get<TEntityType, TIdType>(TIdType id) where TEntityType : IBaseEntity, new() where TIdType : struct;
+		TEntityType Get<TEntityType>(object id) where TEntityType : IBaseEntity, new();
 	}
 
 	[Obsolete("You no longer need to use this Generic type of IBaseDataAccess, you can use the normal IBaseDataAccess. (just remove the generic assignment)", false)]
