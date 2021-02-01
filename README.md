@@ -1,12 +1,8 @@
 # ProphetsWay.BaseDataAccess
 
-| Release   | Status |
-|   ---     |  ---   |
-| Latest Build: | [![Build status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess/BaseDataAccess%20CI)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/?definitionId=7)
-| Alpha:    | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/4/5)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=4)
-| Beta:     | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/4/8)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=4)
-| Release:  | [![Build status](https://vsrm.dev.azure.com/ProphetsWay/_apis/public/Release/badge/dadb23ce-840b-4b7d-9783-dc5e9a2d9029/4/9)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_release?definitionId=4)
-
+| Master Build Status | NuGet Alpha | NuGet Beta | NuGet Release |
+|   ---   |   ---   |   ---   |   ---   |
+| [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Build%20Stage&jobName=CI%20Build)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Deploy%20Alpha%20NuGet%20Package&jobName=Deploy%20Alpha%20NuGet%20Package%20Job)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Deploy%20Beta%20NuGet%20Package&jobName=Deploy%20Beta%20NuGet%20Package%20Job)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Deploy%20Release%20NuGet%20Package&jobName=Deploy%20Release%20NuGet%20Package%20Job)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master)
 
 BaseDataAccess is a light library that is meant to help decouple your software's business logic projects from your Data Access Layer (DAL) implementation. 
 With some new technologies, it is easy to allow yourself to create entity/models in your DAL and use them directly in your business layers, however this
@@ -58,7 +54,7 @@ Using one of the base interfaces will automatically include specific methods, ho
 that you need this entity to have.  (ex: ```IList<Customer> GetCustomersByCompanyId(int companyId); ``` to be specified on the ```ICustomerDao```)
 All of the base interfaces are generic and require a type T to be specified, here you will specify the type of the entity this DAO is for.
 
-```
+```C#
 public interface ICustomerDao : IBaseDao<Customer>
 ```
 
@@ -71,7 +67,7 @@ all three of these BaseDao interfaces completely and manually create all the CRU
 The only thing to remember is that you must make each method signature unique 
 (so instead of just ```T Get(T item);``` you have ```Customer GetCustomer(int customerId);```))
 
-```
+```C#
 T Get(T item);
 void Insert(T item);
 int Update(T item);
@@ -81,7 +77,7 @@ int Delete(T item);
 ###### IBaseGetAllDao
 
 IBaseGetAllDao inherits from IBaseDao, but additionally specifies a **GetAll** call.  This call also requires the parameter similar to the above mentioned situation.
-```
+```C#
 IList<T> GetAll(T item);
 ```
 
@@ -90,7 +86,7 @@ IBasePagedDao also inherits from IBaseDao, and additionally specifies a **GetCou
 however these functions are used to get the upper boundary of how many of an entity you have, and then getting a particular subset of them; useful for user interface
 based queries when trying to optimize data being queried and sent to your front end.
 
-```
+```C#
 IList<T> GetPaged(T item, int skip, int take);
 int GetCount(T item);
 ```
@@ -115,7 +111,7 @@ matter.  If you created the separate DAOs for each entity, then in here you will
 into each specific DAO.
 
 
-```
+```C#
 public class ExampleDataAccess : BaseDataAccessInt, IExampleDataAccess
 {
     private readonly ICustomerDao _customerDao = new CustomerDao();
