@@ -37,9 +37,7 @@ namespace ProphetsWay.BaseDataAccess
         /// <summary>
         /// Assumes that your ID property on your entities is either named "Id" or "EntityTypeNameId"
         /// </summary>
-        public virtual T Get<T, TIdType>(TIdType id)
-            where T : IBaseEntity, new()
-            where TIdType : struct
+        public virtual T Get<T>(object id) where T : IBaseEntity, new()
         {
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
         }
