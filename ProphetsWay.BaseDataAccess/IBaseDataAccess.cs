@@ -43,20 +43,19 @@ namespace ProphetsWay.BaseDataAccess
 		/// allows the business layer logic to wrap many calls within a transaction 
 		/// </summary>
 		void TransactionRollBack();
-	}
 
-	/// <summary>
-	/// An interface to define some basic calls your Base DAL should have accessible.
-	/// Adds a nice shortcut method for your TIdType based index key, inherits IBaseDataAccess
-	/// </summary>
-	public interface IBaseDataAccess<TIdType> : IBaseDataAccess
-	{
 		/// <summary>
 		/// A global version of 'Get' that can be implemented in your base DAL class,
 		/// Allows for a simple get call without instantiating an object and 
 		/// manually setting the ID field everywhere used in your business logic layers.
 		/// Implies your ID properties are of type TIdType.
 		/// </summary>
-		TEntityType Get<TEntityType>(TIdType id) where TEntityType : IBaseEntity, new();
+		TEntityType Get<TEntityType, TIdType>(TIdType id) where TEntityType : IBaseEntity, new() where TIdType : struct;
+	}
+
+	[Obsolete("You no longer need to use this Generic type of IBaseDataAccess, you can use the normal IBaseDataAccess. (just remove the generic assignment)", false)]
+	public interface IBaseDataAccess<TIdType> : IBaseDataAccess
+	{
+
 	}
 }
