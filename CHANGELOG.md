@@ -1,7 +1,11 @@
 # v2.0.0
 ### Updated to support .net 5.0
-Removed target frameworks that are not longer supported by Microsoft (netcoreapp2.0, netcoreapp2.2, netcoreapp3.0).
-Added target framework for .Net 5.0.
+Updated a few things, unfortunately it removed a little bit of functionality, so it counts as a major update, 
+even tho it's really quite a minor update.
+- Removed target frameworks that are not longer supported by Microsoft (netcoreapp2.0, netcoreapp2.2, netcoreapp3.0).
+- Added target framework for .Net 5.0.
+- Added an icon for the package.
+- Updated reference to ProphetsWay.Example 
 
 
 # v1.1.1
