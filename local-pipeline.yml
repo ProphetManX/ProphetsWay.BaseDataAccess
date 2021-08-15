@@ -13,6 +13,7 @@ resources:
     - repository: pp
       type: github
       name: 'ProphetManX/prophets-pipelines'
+      endpoint: ${{ variables.GitHubConnectionName }}
 
 name: $(SemanticVersion).$(Build.BuildId)
 
