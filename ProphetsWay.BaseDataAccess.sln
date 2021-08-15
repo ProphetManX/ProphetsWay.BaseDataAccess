@@ -7,13 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.BaseDataAccess"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0452F8F6-E7AF-46D0-AD85-3CB6AF10EE1D}"
 	ProjectSection(SolutionItems) = preProject
-		azure-pipelines.yml = azure-pipelines.yml
-		build-and-test.yml = build-and-test.yml
-		build-test-deploy-release.yml = build-test-deploy-release.yml
+		app-variables.yml = app-variables.yml
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
+		local-pipeline.yml = local-pipeline.yml
 		README.md = README.md
-		version-variables.yml = version-variables.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Example.DataAccess", "ProphetsWay.Example\ProphetsWay.Example.DataAccess\ProphetsWay.Example.DataAccess.csproj", "{3B58BB4C-75CD-4A64-9EDB-E9B28BBF679C}"

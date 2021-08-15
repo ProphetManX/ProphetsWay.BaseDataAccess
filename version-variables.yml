@@ -1,5 +1,0 @@
-# basic variable constructs that are going to be used across multiple projects
-variables:
-  SemanticVersion: '$(MajorVersion).$(MinorVersion).$(PatchVersion)'
-  AlphaVersion: '$(SemanticVersion)-$(Build.BuildId).Alpha'
-  BetaVersion: '$(SemanticVersion)-$(Build.BuildId).Beta'

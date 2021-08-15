@@ -1,0 +1,59 @@
+
+
+trigger:
+- master
+pr:
+  branches:
+    include:
+      - '*'
+
+
+resources:
+  repositories:
+    - repository: pp
+      type: github
+      name: 'ProphetManX/prophets-pipelines'
+
+name: $(SemanticVersion).$(Build.BuildId)
+
+parameters:
+- name: LocalVariables
+  displayName: 'Local App Variables Filename'
+  type: string
+  default: 'app-variables.yml'
+
+- name: PoolType
+  displayName: 'Use a custom pool, or VM Image'
+  type: string
+  values:
+    - 'VM'
+    - 'Pool'
+  default: 'VM'
+
+- name: PoolName
+  displayName: 'VM Image Name'
+  type: string
+  default: 'windows-latest'
+
+
+
+variables:
+- template: '${{ parameters.LocalVariables }}'
+- template: 'variables/version.yml@pp'
+
+stages:
+- template: 'stages/prophets-pipeline.yml@pp'
+  parameters:
+    PoolType: ${{ parameters.PoolType }}
+    PoolName: ${{ parameters.PoolName }}
+    LocalVariables: ${{ parameters.LocalVariables }}
+
+
+
+
+
+
+
+
+
+
