@@ -23,7 +23,7 @@ stages:
     displayName: 'Build, Test, and Package'
     
     variables:
-    - template: '${{ parameters.LocalVariables }}'
+    - template: '../${{ parameters.LocalVariables }}'
     - template: '../variables/versions.yml'
     
     pool:
