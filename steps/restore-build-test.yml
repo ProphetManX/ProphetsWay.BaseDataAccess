@@ -1,0 +1,21 @@
+# parameters:
+#   TargetProject: ''
+
+steps:
+  # dotnet core inherintly restores when a build is run
+- task: DotNetCoreCLI@2
+  displayName: 'Build Solution'
+  inputs:
+    command: 'build'
+    #projects: ${{ parameters.TargetProject }}
+
+- task: VSTest@2
+  displayName: 'Run Unit Tests'
+  inputs:
+    testSelector: 'testAssemblies'
+    testAssemblyVer2: |
+        **\*test*.dll
+        !**\*TestAdapter.dll
+        !**\obj\**
+    searchFolder: '$(System.DefaultWorkingDirectory)'
+    diagnosticsEnabled: true

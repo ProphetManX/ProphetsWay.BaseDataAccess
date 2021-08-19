@@ -1,0 +1,28 @@
+parameters:
+  PackageToPack: ''
+  OutputDir: ''
+  VersionVariable: ''
+
+steps:
+
+- task: DotNetCoreCLI@2
+  displayName: 'Assemble ${{ parameters.OutputDir }} NuGet Package'
+  inputs:
+    command: 'pack'
+    packagesToPack: '${{ parameters.PackageToPack }}'
+    packDirectory: '$(Build.ArtifactStagingDirectory)\${{ parameters.OutputDir }}'
+    versioningScheme: 'byEnvVar'
+    versionEnvVar: '${{ parameters.VersionVariable }}'
+
+- task: CopyFiles@2
+  displayName: 'Copy Changelog to ${{ parameters.OutputDir }}'
+  inputs:
+    Contents: 'CHANGELOG.md'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)\${{ parameters.OutputDir }}'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish ${{ parameters.OutputDir }} Artifacts'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)\${{ parameters.OutputDir }}'
+    ArtifactName: '${{ parameters.OutputDir }}'
+    publishLocation: 'Container'

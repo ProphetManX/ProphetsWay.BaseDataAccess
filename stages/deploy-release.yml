@@ -1,0 +1,97 @@
+parameters:
+- name: PoolType
+  type: string
+  values:
+    - 'VM'
+    - 'Pool'
+  
+- name: PoolName
+  type: string
+
+- name: LocalVariables
+  type: string
+
+- name: PackageType
+  type: string
+
+- name: DependantStage
+  type: string
+
+- name: ExtraConditions
+  type: boolean
+  default: true
+  
+
+stages:
+- stage: Deploy_${{ parameters.PackageType }}
+  displayName: 'Deploy ${{ parameters.PackageType }}'
+  dependsOn: ${{ parameters.DependantStage }}
+  condition: and( succeeded('${{ parameters.DependantStage }}'), ${{ parameters.ExtraConditions }})
+  
+  jobs:
+  - deployment: 'Deploy${{ parameters.PackageType}}Package'
+    displayName: 'Deploy ${{ parameters.PackageType}} Package'
+
+    variables:
+    - template: '${{ parameters.LocalVariables }}@self'
+    - template: '../variables/versions.yml'
+    
+    pool:
+      ${{ if eq( parameters.PoolType, 'VM' )}}:
+        vmImage: ${{ parameters.PoolName }}
+      ${{ if eq( parameters.PoolType, 'Pool' )}}:
+        name: ${{ parameters.PoolName }}
+
+    environment: '${{ variables.Product }} ${{ parameters.PackageType }} NuGet'
+    strategy: 
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadBuildArtifacts@0
+            displayName: Download Artifact
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: '${{ parameters.PackageType}}'
+              downloadPath: '$(build.artifactstagingdirectory)'
+          
+          - ${{ if eq( parameters.PackageType, 'Beta') }}:
+            - template: '../steps/create-github-release.yml'
+              parameters: 
+                PackageType: ${{ parameters.PackageType }}
+                GitHubConnectionName: ${{ variables.GitHubConnectionName }}
+                RepositoryName: ${{ variables.RepoName }}
+                VersionNumber: ${{ variables.BetaVersion }}
+                IsPreRelease: true
+          
+          - ${{ if eq( parameters.PackageType, 'Release') }}:
+            - task: GitHubRelease@1
+              displayName: 'Delete GitHub Beta Release'
+              inputs:
+                gitHubConnection: ${{ variables.GitHubConnectionName }}
+                repositoryName: '${{ variables.RepoName }}'
+                action: 'delete'
+                tag: ${{ variables.BetaVersion }}
+
+            - template: '../steps/create-github-release.yml'
+              parameters: 
+                PackageType: ${{ parameters.PackageType }}
+                GitHubConnectionName: ${{ variables.GitHubConnectionName }}
+                RepositoryName: ${{ variables.RepoName }}
+                VersionNumber: ${{ variables.SemanticVersion }}
+
+          - task: NuGetCommand@2
+            displayName: 'Push NuGet ${{ parameters.PackageType}} Package'
+            inputs:
+              command: 'push'
+              packagesToPush: '$(build.artifactstagingdirectory)/${{ parameters.PackageType}}/*.nupkg'
+              nuGetFeedType: 'external'
+              publishFeedCredentials: ${{ variables.NuGetFeedCredentialName }}
+
+
+
+
+
+
+
+

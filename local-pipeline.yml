@@ -8,12 +8,12 @@ pr:
       - '*'
 
 
-resources:
-  repositories:
-    - repository: pp
-      type: github
-      name: 'ProphetManX/prophets-pipelines'
-      endpoint: 'ProphetsWay@GitHub'
+#resources:
+#  repositories:
+#    - repository: pp
+#      type: github
+#      name: 'ProphetManX/prophets-pipelines'
+#      endpoint: 'ProphetsWay@GitHub'
 
 name: $(Major).$(Minor).$(Patch).$(Build.BuildId)
 
@@ -39,10 +39,10 @@ parameters:
 
 variables:
 - template: '${{ parameters.LocalVariables }}'
-- template: 'variables/versions.yml@pp'
+- template: 'variables/versions.yml'
 
 stages:
-- template: 'stages/prophets-pipeline.yml@pp'
+- template: 'stages/prophets-pipeline.yml'
   parameters:
     PoolType: ${{ parameters.PoolType }}
     PoolName: ${{ parameters.PoolName }}

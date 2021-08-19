@@ -24,6 +24,32 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProphetsWay.Example.Tests",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ProphetsWay.Example Projects", "ProphetsWay.Example Projects", "{452C373D-7144-4A7D-BC05-6CD8C4912828}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "New Pipeline Stuff", "New Pipeline Stuff", "{845BA633-506D-4D64-BAE6-6458FBDABE1E}"
+	ProjectSection(SolutionItems) = preProject
+		app-variables.yml = app-variables.yml
+		local-pipeline.yml = local-pipeline.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "stages", "stages", "{06844469-7699-457B-A6F3-8DF2CFDC61A3}"
+	ProjectSection(SolutionItems) = preProject
+		stages\ci-build.yml = stages\ci-build.yml
+		stages\deploy-release.yml = stages\deploy-release.yml
+		stages\prophets-pipeline.yml = stages\prophets-pipeline.yml
+		stages\pull-request.yml = stages\pull-request.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "steps", "steps", "{FBF2C14A-F9C6-4582-97B3-5FDE47B46549}"
+	ProjectSection(SolutionItems) = preProject
+		steps\create-github-release.yml = steps\create-github-release.yml
+		steps\package-artifacts.yml = steps\package-artifacts.yml
+		steps\restore-build-test.yml = steps\restore-build-test.yml
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "variables", "variables", "{FDF4461D-6251-41FE-B21B-0891A24A122C}"
+	ProjectSection(SolutionItems) = preProject
+		variables\versions.yml = variables\versions.yml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -54,6 +80,10 @@ Global
 		{3B58BB4C-75CD-4A64-9EDB-E9B28BBF679C} = {452C373D-7144-4A7D-BC05-6CD8C4912828}
 		{2D571D10-FAF3-42F6-B04F-5984B53A6DDD} = {452C373D-7144-4A7D-BC05-6CD8C4912828}
 		{667E635F-EFD8-4DE9-8D35-769DDA34A0C5} = {452C373D-7144-4A7D-BC05-6CD8C4912828}
+		{845BA633-506D-4D64-BAE6-6458FBDABE1E} = {0452F8F6-E7AF-46D0-AD85-3CB6AF10EE1D}
+		{06844469-7699-457B-A6F3-8DF2CFDC61A3} = {845BA633-506D-4D64-BAE6-6458FBDABE1E}
+		{FBF2C14A-F9C6-4582-97B3-5FDE47B46549} = {845BA633-506D-4D64-BAE6-6458FBDABE1E}
+		{FDF4461D-6251-41FE-B21B-0891A24A122C} = {845BA633-506D-4D64-BAE6-6458FBDABE1E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E62245B-EE6F-4FCF-AF94-C0F4B5C2EC43}

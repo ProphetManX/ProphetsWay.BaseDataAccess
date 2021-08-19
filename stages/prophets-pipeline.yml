@@ -1,0 +1,54 @@
+parameters:
+- name: PoolType
+  type: string
+  values:
+    - 'VM'
+    - 'Pool'
+  
+- name: PoolName
+  type: string
+
+- name: LocalVariables
+  type: string
+
+stages:
+- template: 'pull-request.yml'
+  parameters:
+    PoolType: ${{ parameters.PoolType }}
+    PoolName: ${{ parameters.PoolName }}
+    LocalVariables: ${{ parameters.LocalVariables }}
+  
+- template: 'ci-build.yml'
+  parameters:
+    PoolType: ${{ parameters.PoolType }}
+    PoolName: ${{ parameters.PoolName }}
+    LocalVariables: ${{ parameters.LocalVariables }}
+
+- template: 'deploy-release.yml'
+  parameters:
+    PoolType: ${{ parameters.PoolType }}
+    PoolName: ${{ parameters.PoolName }}
+    LocalVariables: ${{ parameters.LocalVariables }}
+    PackageType: 'Alpha'
+    DependantStage: 'Build'
+    #ExtraConditions: true  # unnecessary
+
+- template: 'deploy-release.yml'
+  parameters:
+    PoolType: ${{ parameters.PoolType }}
+    PoolName: ${{ parameters.PoolName }}
+    LocalVariables: ${{ parameters.LocalVariables }}
+    PackageType: 'Beta'
+    DependantStage: 'Deploy_Alpha'
+    ExtraConditions: ${{ eq(variables['Build.SourceBranchName'], 'main') }}
+    
+- template: 'deploy-release.yml'
+  parameters:
+    PoolType: ${{ parameters.PoolType }}
+    PoolName: ${{ parameters.PoolName }}
+    LocalVariables: ${{ parameters.LocalVariables }}
+    PackageType: 'Release'
+    DependantStage: 'Deploy_Beta'
+    #ExtraConditions: ${{ eq(variables['Build.SourceBranchName'], 'main')) }}  # unnecessary
+
+
