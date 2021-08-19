@@ -33,7 +33,7 @@ stages:
     displayName: 'Deploy ${{ parameters.PackageType}} Package'
 
     variables:
-    - template: '${{ parameters.LocalVariables }}@self'
+    - template: '../${{ parameters.LocalVariables }}'
     - template: '../variables/versions.yml'
     
     pool:
