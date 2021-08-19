@@ -9,7 +9,7 @@ parameters:
 stages:
   - stage: PullRequest
     displayName: Pull Request Stage
-    condition: ne(variables['Build.SourceBranch'], 'refs/heads/master')
+    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
     jobs:
     - job: PrBuild
       displayName: PR Build
@@ -26,7 +26,7 @@ stages:
 
   - stage: Build
     displayName: Build Stage
-    condition: contains(variables['build.sourceBranch'], 'refs/heads/master')
+    condition: contains(variables['build.sourceBranch'], 'refs/heads/main')
     variables:
     - template: version-variables.yml
 
@@ -112,7 +112,7 @@ stages:
   - stage: DeployAlpha
     displayName: Deploy Alpha NuGet Package
     dependsOn: Build
-    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     jobs:
     - job: DeployAlpha
       displayName: 'Deploy Alpha NuGet Package Job'
@@ -139,7 +139,7 @@ stages:
   - stage: DeployBeta
     displayName: Deploy Beta NuGet Package
     dependsOn: DeployAlpha
-    condition: and(succeeded('DeployAlpha'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded('DeployAlpha'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     variables:
     - template: version-variables.yml
 
@@ -189,7 +189,7 @@ stages:
   - stage: DeployRelease
     displayName: Deploy Release NuGet Package
     dependsOn: DeployBeta
-    condition: and(succeeded('DeployBeta'), eq(variables['Build.SourceBranch'], 'refs/heads/master'))
+    condition: and(succeeded('DeployBeta'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
     variables:
     - template: version-variables.yml
 
