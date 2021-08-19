@@ -61,7 +61,10 @@ stages:
         FailOnWarning: false
         DisableTelemetry: false
 
-    - template: '../steps/restore-build-test.yml'
+    #- template: '../steps/restore-build-test.yml'
+    - template: '../build-and-test.yml'
+      parameters:
+        vmImage: ${{ parameters.PoolName }}
     
     - template: '../steps/package-artifacts.yml'
       parameters: 
