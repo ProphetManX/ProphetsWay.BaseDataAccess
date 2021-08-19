@@ -23,7 +23,7 @@ stages:
     displayName: 'Build and Run Unit Tests'
     
     variables:
-    - template: '${{ parameters.LocalVariables }}@self'
+    - template: '${{ parameters.LocalVariables }}'
     
     pool:
       ${{ if eq( parameters.PoolType, 'VM' )}}:
