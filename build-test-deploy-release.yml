@@ -65,9 +65,10 @@ stages:
           FailOnWarning: false
           DisableTelemetry: false
 
-      - template: build-and-test.yml
-        parameters:
-          vmImage: ${{parameters.vmImage}}
+      - template: 'steps/restore-build-test.yml'
+      #- template: build-and-test.yml
+      #  parameters:
+      #    vmImage: ${{parameters.vmImage}}
 
       - task: DotNetCoreCLI@2
         displayName: 'Assemble Alpha NuGet Package'
