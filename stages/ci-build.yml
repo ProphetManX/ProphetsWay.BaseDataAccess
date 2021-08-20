@@ -24,12 +24,15 @@ stages:
   jobs:
   - job: BuildAndPackage
     displayName: 'Build, Test, and Package'
-    pool:
-      ${{ if eq( parameters.PoolType, 'VM' )}}:
-        vmImage: ${{ parameters.PoolName }}
-      ${{ if eq( parameters.PoolType, 'Pool' )}}:
-        name: ${{ parameters.PoolName }}
+    #pool:
+    #  ${{ if eq( parameters.PoolType, 'VM' )}}:
+    #    vmImage: ${{ parameters.PoolName }}
+    #  ${{ if eq( parameters.PoolType, 'Pool' )}}:
+    #    name: ${{ parameters.PoolName }}
     
+    pool:
+      vmImage: 'windows-latest'
+
     steps:
     - checkout: self
       submodules: true

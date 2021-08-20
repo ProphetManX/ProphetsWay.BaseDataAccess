@@ -9,7 +9,8 @@ parameters:
 stages:
   - stage: PullRequest
     displayName: Pull Request Stage
-    condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    dependsOn: []
     jobs:
     - job: PrBuild
       displayName: PR Build
@@ -26,7 +27,8 @@ stages:
 
   - stage: Build
     displayName: Build Stage
-    condition: contains(variables['build.sourceBranch'], 'refs/heads/main')
+    condition: ne(variables['Build.Reason'], 'PullRequest')
+    dependsOn: []
     variables:
     - template: version-variables.yml
 
