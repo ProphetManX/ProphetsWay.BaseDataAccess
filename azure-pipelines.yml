@@ -14,7 +14,7 @@ pr:
 variables:
   MajorVersion: '2'
   MinorVersion: '1'
-  PatchVersion: '0'
+  PatchVersion: '1'
 
 
 stages:
