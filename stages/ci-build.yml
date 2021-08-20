@@ -17,9 +17,9 @@ stages:
   displayName: 'CI Build'
   condition: ne(variables['Build.Reason'], 'PullRequest')
   dependsOn: []
-  variables:
+  #variables:
   #- template: '../${{ parameters.LocalVariables }}'
-  - template: '../version-variables.yml'
+  #- template: '../version-variables.yml'
 
   jobs:
   - job: BuildAndPackage
