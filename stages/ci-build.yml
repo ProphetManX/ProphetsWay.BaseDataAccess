@@ -36,30 +36,30 @@ stages:
     - checkout: self
       submodules: true
 
-    - task: Assembly-Info-NetCore@2
-      displayName: 'Set Assembly Info'
-      inputs:
-        Path: '$(Build.SourcesDirectory)'
-        FileNames: '${{ variables.TargetProject }}'
-        InsertAttributes: true
-        FileEncoding: 'auto'
-        WriteBOM: false
-        PackageRequireLicenseAcceptance: true
-        PackageId: '${{ variables.PackageId }}'
-        Authors: '${{ variables.Authors }}'
-        Company: '${{ variables.Company }}'
-        Product: '${{ variables.Product }}'
-        PackageLicenseUrl: '${{ variables.LicenseUrl }}'
-        RepositoryUrl: 'https://github.com/${{ variables.RepoName }}'
-        PackageIconUrl: '${{ variables.IconUrl }}'
-        RepositoryType: '${{ variables.RepoType }}'
-        VersionNumber: '$(SemanticVersion).$(Build.BuildId)'
-        FileVersionNumber: '$(SemanticVersion).$(Build.BuildId)'
-        InformationalVersion: '$(SemanticVersion)'
-        PackageVersion: '$(SemanticVersion)'
-        LogLevel: 'verbose'
-        FailOnWarning: false
-        DisableTelemetry: false
+    #- task: Assembly-Info-NetCore@2
+    #  displayName: 'Set Assembly Info'
+    #  inputs:
+    #    Path: '$(Build.SourcesDirectory)'
+    #    FileNames: '${{ variables.TargetProject }}'
+    #    InsertAttributes: true
+    #    FileEncoding: 'auto'
+    #    WriteBOM: false
+    #    PackageRequireLicenseAcceptance: true
+    #    PackageId: '${{ variables.PackageId }}'
+    #    Authors: '${{ variables.Authors }}'
+    #    Company: '${{ variables.Company }}'
+    #    Product: '${{ variables.Product }}'
+    #    PackageLicenseUrl: '${{ variables.LicenseUrl }}'
+    #    RepositoryUrl: 'https://github.com/${{ variables.RepoName }}'
+    #    PackageIconUrl: '${{ variables.IconUrl }}'
+    #    RepositoryType: '${{ variables.RepoType }}'
+    #    VersionNumber: '$(SemanticVersion).$(Build.BuildId)'
+    #    FileVersionNumber: '$(SemanticVersion).$(Build.BuildId)'
+    #    InformationalVersion: '$(SemanticVersion)'
+    #    PackageVersion: '$(SemanticVersion)'
+    #    LogLevel: 'verbose'
+    #    FailOnWarning: false
+    #    DisableTelemetry: false
 
     - template: '../steps/restore-build-test.yml'
     #- template: '../build-and-test.yml'

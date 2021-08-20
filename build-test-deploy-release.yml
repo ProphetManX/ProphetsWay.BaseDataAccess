@@ -40,30 +40,30 @@ stages:
       - checkout: self
         submodules: true
 
-      - task: Assembly-Info-NetCore@2
-        displayName: 'Set Assembly Info'
-        inputs:
-          Path: '$(Build.SourcesDirectory)'
-          FileNames: '${{parameters.targetProject}}'
-          InsertAttributes: true
-          FileEncoding: 'auto'
-          WriteBOM: false
-          PackageRequireLicenseAcceptance: true
-          PackageId: 'ProphetsWay.${{parameters.libraryName}}'
-          Authors: 'G. Gordon Nasseri'
-          Company: 'ProphetsWay'
-          Product: '${{parameters.libraryName}}'
-          PackageLicenseUrl: '${{parameters.licenseUrl}}'
-          RepositoryUrl: 'https://github.com/ProphetManX/ProphetsWay.${{parameters.libraryName}}'
-          PackageIconUrl: 'http://2.gravatar.com/avatar/b0d9dde03970c4cedf0023a86d169d11'
-          RepositoryType: 'GitHub'
-          VersionNumber: '$(SemanticVersion).$(Build.BuildId)'
-          FileVersionNumber: '$(SemanticVersion).$(Build.BuildId)'
-          InformationalVersion: '$(SemanticVersion)'
-          PackageVersion: '$(SemanticVersion)'
-          LogLevel: 'verbose'
-          FailOnWarning: false
-          DisableTelemetry: false
+      #- task: Assembly-Info-NetCore@2
+      #  displayName: 'Set Assembly Info'
+      #  inputs:
+      #    Path: '$(Build.SourcesDirectory)'
+      #    FileNames: '${{parameters.targetProject}}'
+      #    InsertAttributes: true
+      #    FileEncoding: 'auto'
+      #    WriteBOM: false
+      #    PackageRequireLicenseAcceptance: true
+      #    PackageId: 'ProphetsWay.${{parameters.libraryName}}'
+      #    Authors: 'G. Gordon Nasseri'
+      #    Company: 'ProphetsWay'
+      #    Product: '${{parameters.libraryName}}'
+      #    PackageLicenseUrl: '${{parameters.licenseUrl}}'
+      #    RepositoryUrl: 'https://github.com/ProphetManX/ProphetsWay.${{parameters.libraryName}}'
+      #    PackageIconUrl: 'http://2.gravatar.com/avatar/b0d9dde03970c4cedf0023a86d169d11'
+      #    RepositoryType: 'GitHub'
+      #    VersionNumber: '$(SemanticVersion).$(Build.BuildId)'
+      #    FileVersionNumber: '$(SemanticVersion).$(Build.BuildId)'
+      #    InformationalVersion: '$(SemanticVersion)'
+      #    PackageVersion: '$(SemanticVersion)'
+      #    LogLevel: 'verbose'
+      #    FailOnWarning: false
+      #    DisableTelemetry: false
 
       - template: 'steps/restore-build-test.yml'
       #- template: build-and-test.yml
