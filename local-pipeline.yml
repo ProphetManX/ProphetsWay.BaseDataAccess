@@ -27,8 +27,8 @@ parameters:
   displayName: 'Use a custom pool, or VM Image'
   type: string
   values:
-    - 'VM'
-    - 'Pool'
+  - 'VM'
+  - 'Pool'
   default: 'VM'
 
 - name: PoolName
