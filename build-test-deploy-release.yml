@@ -31,7 +31,7 @@ stages:
     dependsOn: []
     variables:
     - template: app-variables.yml
-    - template: version-variables.yml
+    - template: variables/versions.yml
 
     jobs:
     - job: CiBuild
