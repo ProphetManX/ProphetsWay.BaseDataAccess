@@ -11,10 +11,10 @@ pr:
     - '*'
 
 
-#variables:
-#  MajorVersion: '2'
-#  MinorVersion: '1'
-#  PatchVersion: '0'
+variables:
+  MajorVersion: '2'
+  MinorVersion: '1'
+  PatchVersion: '0'
 
 
 stages:

@@ -30,8 +30,9 @@ stages:
     condition: ne(variables['Build.Reason'], 'PullRequest')
     dependsOn: []
     variables:
-    - template: app-variables.yml
-    - template: variables/versions.yml
+    #- template: app-variables.yml
+    #- template: variables/versions.yml
+    - template: version-variables.yml
 
     jobs:
     - job: CiBuild
