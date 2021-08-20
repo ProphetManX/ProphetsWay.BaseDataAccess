@@ -17,15 +17,13 @@ stages:
   displayName: 'CI Build'
   condition: ne(variables['Build.Reason'], 'PullRequest')
   dependsOn: []
+  variables:
+  - template: '../${{ parameters.LocalVariables }}'
+  - template: '../variables/versions.yml'
 
   jobs:
   - job: BuildAndPackage
     displayName: 'Build, Test, and Package'
-    
-    variables:
-    - template: '../${{ parameters.LocalVariables }}'
-    - template: '../variables/versions.yml'
-    
     pool:
       ${{ if eq( parameters.PoolType, 'VM' )}}:
         vmImage: ${{ parameters.PoolName }}
