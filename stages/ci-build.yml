@@ -19,7 +19,7 @@ stages:
   dependsOn: []
   variables:
   - template: '../${{ parameters.LocalVariables }}'
-  - template: '../variables/versions.yml'
+  - template: '../version-variables.yml
 
   jobs:
   - job: BuildAndPackage
