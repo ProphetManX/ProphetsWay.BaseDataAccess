@@ -4,16 +4,11 @@
 steps:
   # dotnet core inherintly restores when a build is run
 - task: DotNetCoreCLI@2
-  displayName: 'restore Solution'
-  inputs:
-    command: 'restore'
-    #projects: ${{ parameters.TargetProject }}
-
-- task: DotNetCoreCLI@2
   displayName: 'Build Solution'
   inputs:
     command: 'build'
     #projects: ${{ parameters.TargetProject }}
+    projects: '**\ProphetsWay.BaseDataAccess.sln'
     
 - task: VSTest@2
   displayName: 'Run Unit Tests'
