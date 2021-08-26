@@ -4,7 +4,7 @@
 steps:
   # dotnet core inherintly restores when a build is run
 - task: DotNetCoreCLI@2
-  displayName: 'Build Solution'
+  displayName: 'restore Solution'
   inputs:
     command: 'restore'
     #projects: ${{ parameters.TargetProject }}
