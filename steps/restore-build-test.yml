@@ -6,9 +6,15 @@ steps:
 - task: DotNetCoreCLI@2
   displayName: 'Build Solution'
   inputs:
-    command: 'build'
+    command: 'restore'
     #projects: ${{ parameters.TargetProject }}
 
+- task: DotNetCoreCLI@2
+  displayName: 'Build Solution'
+  inputs:
+    command: 'build'
+    #projects: ${{ parameters.TargetProject }}
+    
 - task: VSTest@2
   displayName: 'Run Unit Tests'
   inputs:
