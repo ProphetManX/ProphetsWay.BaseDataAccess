@@ -15,7 +15,7 @@ steps:
   inputs:
     command: 'build'
     #projects: ${{ parameters.TargetProject }}
-    projects: '**\ProphetsWay.Example.sln'
+    projects: '**\ProphetsWay.Example.Tests.csproj'
     
 - task: VSTest@2
   displayName: 'Run Unit Tests'
