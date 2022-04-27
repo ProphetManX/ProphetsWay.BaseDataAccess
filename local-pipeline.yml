@@ -13,7 +13,7 @@ resources:
       name: 'ProphetManX/prophets-pipelines'
       endpoint: ProphetsWay@GitHub
 
-name: ${{ variables.SemanticVersion }}.$(Build.BuildId)
+name: $(Major).$(Minor).$(Patch).$(Build.BuildId)
 
 parameters:
 - name: LocalVariables
