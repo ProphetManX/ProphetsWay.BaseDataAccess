@@ -40,7 +40,7 @@ parameters:
 
 variables:
 - template: '${{ parameters.LocalVariables }}'
-- template: 'variables/version.yml@pp'
+- template: 'variables/versions.yml@pp'
 
 stages:
 - template: 'stages/prophets-pipeline.yml@pp'
