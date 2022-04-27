@@ -1,5 +1,3 @@
-
-
 trigger:
 - main
 pr:
@@ -49,12 +47,4 @@ stages:
     PoolType: ${{ parameters.PoolType }}
     PoolName: ${{ parameters.PoolName }}
     LocalVariables: ${{ parameters.LocalVariables }}
-
-
-
-
-
-
-
-
 
