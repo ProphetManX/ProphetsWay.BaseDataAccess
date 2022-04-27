@@ -13,7 +13,9 @@ resources:
       name: 'ProphetManX/prophets-pipelines'
       endpoint: ProphetsWay@GitHub
 
+
 name: $(Major).$(Minor).$(Patch).$(Build.BuildId)
+
 
 parameters:
 - name: LocalVariables
@@ -37,7 +39,7 @@ parameters:
 
 variables:
 - template: '${{ parameters.LocalVariables }}'
-- template: 'variables/versions.yml@pp'
+
 
 stages:
 - template: 'stages/prophets-pipeline.yml@pp'
