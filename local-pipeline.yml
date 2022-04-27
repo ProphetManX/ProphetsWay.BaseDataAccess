@@ -37,9 +37,12 @@ parameters:
 
 variables:
 - template: '${{ parameters.LocalVariables }}'
-  SemanticVersion: '$(Major).$(Minor).$(Patch)'
-  AlphaVersion: '$(SemanticVersion)-$(Build.BuildId).Alpha'
-  BetaVersion: '$(SemanticVersion)-$(Build.BuildId).Beta'
+- name: SemanticVersion
+  value: '$(Major).$(Minor).$(Patch)'
+- name: AlphaVersion
+  value: '$(SemanticVersion)-$(Build.BuildId).Alpha'
+- name: BetaVersion
+  value: '$(SemanticVersion)-$(Build.BuildId).Beta'
 
 stages:
 - template: 'stages/prophets-pipeline.yml@pp'
