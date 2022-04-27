@@ -8,14 +8,13 @@ pr:
       - '*'
 
 
-#resources:
-#  repositories:
-#    - repository: pp
-#      type: github
-#      name: 'ProphetManX/prophets-pipelines'
-#      endpoint: 'ProphetsWay@GitHub'
+resources:
+  repositories:
+    - repository: pp
+      type: github
+      name: 'ProphetManX/prophets-pipelines'
 
-name: $(MajorVersion).$(MinorVersion).$(PatchVersion).$(Build.BuildId)
+name: $(SemanticVersion).$(Build.BuildId)
 
 parameters:
 - name: LocalVariables
@@ -27,8 +26,8 @@ parameters:
   displayName: 'Use a custom pool, or VM Image'
   type: string
   values:
-  - 'VM'
-  - 'Pool'
+    - 'VM'
+    - 'Pool'
   default: 'VM'
 
 - name: PoolName
@@ -37,18 +36,17 @@ parameters:
   default: 'windows-latest'
 
 
+
 variables:
 - template: '${{ parameters.LocalVariables }}'
-#- template: 'variables/versions.yml'
-- template: version-variables.yml
+- template: 'variables/version.yml@pp'
 
 stages:
-- template: 'stages/prophets-pipeline.yml'
+- template: 'stages/prophets-pipeline.yml@pp'
   parameters:
     PoolType: ${{ parameters.PoolType }}
     PoolName: ${{ parameters.PoolName }}
     LocalVariables: ${{ parameters.LocalVariables }}
-
 
 
 

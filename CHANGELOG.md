@@ -1,3 +1,8 @@
+# v2.1.2
+### Updated to support .net 6.0
+Updated the pipeline template to be more robust and reusable across many of my other projects.  Also updated the build
+targets to support .net 6.0
+
 # v2.1.0
 ### Rolled up ```IBaseDataAccess<TIdType>```/```BaseDataAccess<TIdType>``` into their base classes
 Updated the root base interface/class to include the generic ```Get``` method, because it's possible the user would build

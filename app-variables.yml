@@ -2,7 +2,7 @@ variables:
   #user must update these each build personally as new versions are being worked on
   MajorVersion: '2'
   MinorVersion: '1'
-  PatchVersion: '1'
+  PatchVersion: '2'
 
   # set these once and forget them per project/repo 
   TargetProject: '**/ProphetsWay.BaseDataAccess.csproj'
