@@ -37,10 +37,11 @@ parameters:
   default: 'windows-latest'
 
 
-
 variables:
 - template: '${{ parameters.LocalVariables }}'
-- template: 'variables/versions.yml@pp'
+  SemanticVersion: '$(Major).$(Minor).$(Patch)'
+  AlphaVersion: '$(SemanticVersion)-$(Build.BuildId).Alpha'
+  BetaVersion: '$(SemanticVersion)-$(Build.BuildId).Beta'
 
 stages:
 - template: 'stages/prophets-pipeline.yml@pp'
