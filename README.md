@@ -1,8 +1,7 @@
 # ProphetsWay.BaseDataAccess
 
-| Master Build Status | NuGet Alpha | NuGet Beta | NuGet Release |
-|   ---   |   ---   |   ---   |   ---   |
-| [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Build%20Stage&jobName=CI%20Build)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Deploy%20Alpha%20NuGet%20Package&jobName=Deploy%20Alpha%20NuGet%20Package%20Job)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Deploy%20Beta%20NuGet%20Package&jobName=Deploy%20Beta%20NuGet%20Package%20Job)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master) | [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/BaseDataAccess?branchName=master&stageName=Deploy%20Release%20NuGet%20Package&jobName=Deploy%20Release%20NuGet%20Package%20Job)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=20&branchName=master)
+Build Status:  
+[![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.BaseDataAccess?repoName=ProphetManX%2FProphetsWay.BaseDataAccess&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=23&repoName=ProphetManX%2FProphetsWay.BaseDataAccess&branchName=main)
 
 BaseDataAccess is a light library that is meant to help decouple your software's business logic projects from your Data Access Layer (DAL) implementation. 
 With some new technologies, it is easy to allow yourself to create entity/models in your DAL and use them directly in your business layers, however this
