@@ -1,3 +1,7 @@
+# v2.1.3
+### Minor pipeline fixes
+No functional changes, just updating how the pipeline triggers and the readme file.
+
 # v2.1.2
 ### Updated to support .net 6.0
 Updated the pipeline template to be more robust and reusable across many of my other projects.  Also updated the build
