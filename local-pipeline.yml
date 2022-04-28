@@ -1,5 +1,3 @@
-
-
 trigger:
 - main
 pr:
@@ -8,14 +6,16 @@ pr:
       - '*'
 
 
-#resources:
-#  repositories:
-#    - repository: pp
-#      type: github
-#      name: 'ProphetManX/prophets-pipelines'
-#      endpoint: 'ProphetsWay@GitHub'
+resources:
+  repositories:
+    - repository: pp
+      type: github
+      name: 'ProphetManX/prophets-pipelines'
+      endpoint: ProphetsWay@GitHub
 
-name: $(MajorVersion).$(MinorVersion).$(PatchVersion).$(Build.BuildId)
+
+name: $(Major).$(Minor).$(Patch).$(Build.BuildId)
+
 
 parameters:
 - name: LocalVariables
@@ -27,8 +27,8 @@ parameters:
   displayName: 'Use a custom pool, or VM Image'
   type: string
   values:
-  - 'VM'
-  - 'Pool'
+    - 'VM'
+    - 'Pool'
   default: 'VM'
 
 - name: PoolName
@@ -39,22 +39,12 @@ parameters:
 
 variables:
 - template: '${{ parameters.LocalVariables }}'
-#- template: 'variables/versions.yml'
-- template: version-variables.yml
+
 
 stages:
-- template: 'stages/prophets-pipeline.yml'
+- template: 'stages/prophets-pipeline.yml@pp'
   parameters:
     PoolType: ${{ parameters.PoolType }}
     PoolName: ${{ parameters.PoolName }}
     LocalVariables: ${{ parameters.LocalVariables }}
-
-
-
-
-
-
-
-
-
 
