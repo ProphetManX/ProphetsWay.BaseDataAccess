@@ -5,7 +5,7 @@ trigger:
   paths:
     exclude:
       - /*.md
-      - /*.yml
+      - /local-pipeline.yml
 pr:
   branches:
     include:
