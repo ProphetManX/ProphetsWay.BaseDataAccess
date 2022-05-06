@@ -53,4 +53,3 @@ stages:
     PoolType: ${{ parameters.PoolType }}
     PoolName: ${{ parameters.PoolName }}
     LocalVariables: ${{ parameters.LocalVariables }}
-    PostTargetToNuGet: ${{ variables.PostTargetToNuGet }}
