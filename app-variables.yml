@@ -5,6 +5,8 @@ variables:
   Patch: '3'
 
   # set these once and forget them per project/repo 
+  #HasSqlProj: ''  #can be empty or ignored if unnecessary, but if "yes" then pipeline will find any *.sqlproj projects and build them 
+  PostTargetToNuGet: 'yes'  #can be empty or ignored if unnecessary, but if "yes" then pipeline will build alpha, beta, and semantic NuGet release packages
   TargetProject: '**/ProphetsWay.BaseDataAccess.csproj'
   PackageId: 'ProphetsWay.BaseDataAccess'
   Authors: 'G. Gordon Nasseri'
