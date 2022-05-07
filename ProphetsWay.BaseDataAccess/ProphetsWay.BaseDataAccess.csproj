@@ -16,6 +16,7 @@
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>ProphetsWay</Company>
 		<PackageIcon>profile.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<Description>
 A group of interfaces to define any/all interactions required for a Data Access Layer (DAL).  
 
@@ -47,7 +48,9 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="profile.png" Pack="true" PackagePath=""/>
+		<None Include="..\CHANGELOG.md" Link="CHANGELOG.md" Pack="true" PackagePath="" />
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="" />
+		<None Include="profile.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 </Project>
