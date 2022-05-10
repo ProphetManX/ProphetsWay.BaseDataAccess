@@ -9,6 +9,7 @@
 		</TargetFrameworks>
 		<RootNamespace>ProphetsWay.BaseDataAccess</RootNamespace>
 		<AssemblyName>ProphetsWay.BaseDataAccess</AssemblyName>
+		<PackageId>ProphetsWay.BaseDataAccess</PackageId>
 		<ApplicationIcon />
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -17,6 +18,7 @@
 		<Company>ProphetsWay</Company>
 		<PackageIcon>profile.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<Description>
 A group of interfaces to define any/all interactions required for a Data Access Layer (DAL).  
 
@@ -27,7 +29,7 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 
 		<!-- Assembly Override Properties -->
 		<PackageRequireLicenseAcceptance />
-		<PackageId />
+		
 		<Version />
 		<Authors />
 		<Company />
@@ -39,7 +41,7 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 		<RepositoryUrl />
 		<RepositoryType />
 		<PackageTags />
-		<PackageReleaseNotes>CHANGELOG.md</PackageReleaseNotes>
+		<PackageReleaseNotes />
 		<NeutralLanguage />
 		<AssemblyVersion />
 		<FileVersion />
