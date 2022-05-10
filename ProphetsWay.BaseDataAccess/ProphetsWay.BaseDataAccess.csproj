@@ -7,9 +7,14 @@
 			netcoreapp2.1;netcoreapp3.1;
 			net50;net60;
 		</TargetFrameworks>
+		<Authors>G. Gordon Nasseri</Authors>
+		<Company>Prophet's Way</Company>
+		<Product>BaseDataAccess</Product>
 		<RootNamespace>ProphetsWay.BaseDataAccess</RootNamespace>
 		<AssemblyName>ProphetsWay.BaseDataAccess</AssemblyName>
 		<PackageId>ProphetsWay.BaseDataAccess</PackageId>
+		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.BaseDataAccess</RepositoryUrl>
 		<ApplicationIcon />
 		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -19,6 +24,7 @@
 		<PackageIcon>profile.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<Description>
 A group of interfaces to define any/all interactions required for a Data Access Layer (DAL).  
 
@@ -28,18 +34,11 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 		</Description>
 
 		<!-- Assembly Override Properties -->
-		<PackageRequireLicenseAcceptance />
 		
 		<Version />
-		<Authors />
-		<Company />
-		<Product />
 
 		<Copyright />
-		<PackageLicenseUrl />
 		<PackageProjectUrl />
-		<RepositoryUrl />
-		<RepositoryType />
 		<PackageTags />
 		<PackageReleaseNotes />
 		<NeutralLanguage />
@@ -52,7 +51,7 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 	<ItemGroup>
 		<None Include="..\CHANGELOG.md" Link="CHANGELOG.md" Pack="true" PackagePath="" />
 		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="" />
-		<None Include="profile.png" Pack="true" PackagePath="" />
+		<Content Include="..\profile.png" Link="profile.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 
 </Project>
