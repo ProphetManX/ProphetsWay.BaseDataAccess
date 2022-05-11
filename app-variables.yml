@@ -8,13 +8,6 @@ variables:
   #HasSqlProj: ''  #can be empty or ignored if unnecessary, but if "yes" then pipeline will find any *.sqlproj projects and build them 
   PostTargetToNuGet: 'yes'  #can be empty or ignored if unnecessary, but if "yes" then pipeline will build alpha, beta, and semantic NuGet release packages
   TargetProject: '**/ProphetsWay.BaseDataAccess.csproj'
-  PackageId: 'ProphetsWay.BaseDataAccess'
-  Authors: 'G. Gordon Nasseri'
-  Company: 'ProphetsWay'
   Product: 'BaseDataAccess'
-  RepoType: 'GitHub'
-  RepoName: 'ProphetManX/ProphetsWay.BaseDataAccess'
-  LicenseUrl: 'https://opensource.org/licenses/MIT'
-  IconUrl: 'http://2.gravatar.com/avatar/b0d9dde03970c4cedf0023a86d169d11'
   NuGetFeedCredentialName: 'ProphetManX''s NuGet'
   GitHubConnectionName: 'ProphetsWay@GitHub'
