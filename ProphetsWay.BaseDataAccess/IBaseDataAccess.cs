@@ -52,10 +52,29 @@ namespace ProphetsWay.BaseDataAccess
 		/// </summary>
 		TEntityType Get<TEntityType>(object id) where TEntityType : IBaseEntity, new();
 
+		/// <summary>
+		/// A global version of 'Insert' that can be used generically.  Allows for custom
+		/// generic classes/services that can support Inserting any of your generic 
+		/// base class entities, and the DAL will automatically identify which Dao the
+		/// 'Insert' should be called upon.
+		/// </summary>
 		void Insert<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
 
+		/// <summary>
+		/// A global version of 'Update' that can be used generically.  Allows for custom
+		/// generic classes/services that can support Updating any of your generic 
+		/// base class entities, and the DAL will automatically identify which Dao the
+		/// 'Update' should be called upon.
+		/// </summary>
 		int Update<TEntityType>(TEntityType item) where TEntityType: IBaseEntity, new();
 
+
+		/// <summary>
+		/// A global version of 'Delete' that can be used generically.  Allows for custom
+		/// generic classes/services that can support Deleteing any of your generic 
+		/// base class entities, and the DAL will automatically identify which Dao the
+		/// 'Delete' should be called upon.
+		/// </summary>
 		int Delete<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
 	}
 
