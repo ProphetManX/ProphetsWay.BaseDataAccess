@@ -51,6 +51,12 @@ namespace ProphetsWay.BaseDataAccess
 		/// Implies your ID properties are of type TIdType.
 		/// </summary>
 		TEntityType Get<TEntityType>(object id) where TEntityType : IBaseEntity, new();
+
+		void Insert<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
+
+		int Update<TEntityType>(TEntityType item) where TEntityType: IBaseEntity, new();
+
+		int Delete<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
 	}
 
 	[Obsolete("You no longer need to use this Generic type of IBaseDataAccess, you can use the normal IBaseDataAccess. (just remove the generic assignment)", false)]
