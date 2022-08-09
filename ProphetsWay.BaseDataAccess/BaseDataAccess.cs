@@ -41,6 +41,24 @@ namespace ProphetsWay.BaseDataAccess
         {
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
         }
+
+        public virtual void Insert<T>(T item) where T : IBaseEntity, new()
+        {
+            var mtd = this.GetMethodByNameForType<T>("Insert");
+            mtd.Invoke(this, new object[] { item });
+        }
+
+        public virtual int Update<T>(T item) where T : IBaseEntity, new()
+        {
+            var mtd = this.GetMethodByNameForType<T>("Update");
+            return (int)mtd.Invoke(this, new object[] { item });
+        }
+
+        public virtual int Delete<T>(T item) where T : IBaseEntity, new()
+        {
+            var mtd = this.GetMethodByNameForType<T>("Delete");
+            return (int)mtd.Invoke(this, new object[] { item });
+        }
     }
 
     [Obsolete("You no longer need to use this Generic type of BaseDataAccess, you can use the normal BaseDataAccess. (just remove the generic assignment)", false)]    

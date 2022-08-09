@@ -1,3 +1,7 @@
+# v2.1.5
+### Added Generic CRUD Calls
+Added the ability to call ```Insert```, ```Update```, and ```Delete``` generically, similar to how ```Get<\T>(int id)``` works already.
+
 # v2.1.3, v2.1.4
 ### Minor pipeline fixes
 No functional changes, just updating how the pipeline triggers and the readme file.
