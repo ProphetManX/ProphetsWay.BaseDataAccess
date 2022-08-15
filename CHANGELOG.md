@@ -1,4 +1,4 @@
-# v2.1.5
+# v2.2.0
 ### Added Generic CRUD Calls
 Added the ability to call ```Insert```, ```Update```, and ```Delete``` generically, similar to how ```Get<\T>(int id)``` works already.
 
