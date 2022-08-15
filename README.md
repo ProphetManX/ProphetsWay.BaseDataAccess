@@ -111,7 +111,7 @@ into each specific DAO.
 
 
 ```C#
-public class ExampleDataAccess : BaseDataAccessInt, IExampleDataAccess
+public class ExampleDataAccess : BaseDataAccess, IExampleDataAccess
 {
     private readonly ICustomerDao _customerDao = new CustomerDao();
         
@@ -121,10 +121,23 @@ public class ExampleDataAccess : BaseDataAccessInt, IExampleDataAccess
 }
 ```
 
+The class ```BaseDataAccess``` has some generic methods to execute the CRUD calls.  These methods
+are available to generically call any entity from the DataAccess object without having to 
+explicitly know what type of entity it is (so long as it implements ```IBaseEntity```)
+```C#
+    void Insert<T>(T item) where T : IBaseEntity, new()
+    T Get<T>(object id) where T : IBaseEntity, new()
+    int Update<T>(T item) where T : IBaseEntity, new()
+    int Delete<T>(T item) where T : IBaseEntity, new()
+```
+
+
 
 ## Running the tests
 
-The library has 21 unit tests currently.  I tried to cover everything possible.  They are created with an XUnit test project, as well as an Example project.
+The library has 35 unit tests currently.  I tried to cover everything possible; 
+however they are created in an Example project within another repository.
+https://github.com/ProphetManX/ProphetsWay.Example
 
 
 ## Versioning
