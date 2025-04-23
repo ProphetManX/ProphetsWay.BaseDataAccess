@@ -1,7 +1,7 @@
 variables:
   #user must update these each build personally as new versions are being worked on
   Major: '2'
-  Minor: '2'
+  Minor: '3'
   Patch: '0'
 
   # set these once and forget them per project/repo 
