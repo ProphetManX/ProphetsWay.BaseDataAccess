@@ -1,3 +1,7 @@
+# v2.3.0
+### Updated .Net Framework versions
+Updated the target framework to include .Net 7.0, 8.0, and 9.0 and removed support for .Net Core 2.0, 2.1, and 2.2 as they are no longer supported by Microsoft.
+
 # v2.2.0
 ### Added Generic CRUD Calls
 Added the ability to call ```Insert```, ```Update```, and ```Delete``` generically, similar to how ```Get<\T>(int id)``` works already.

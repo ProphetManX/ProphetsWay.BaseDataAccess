@@ -2,10 +2,8 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>
-			net40;net45;net451;net452;net46;net461;net471;net48;
-			netstandard2.0;netstandard2.1;
-			netcoreapp2.1;netcoreapp3.1;
-			net50;net60;
+			net461;net471;net48;
+			net50;net60;net70;net80;net90;
 		</TargetFrameworks>
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>Prophet's Way</Company>
