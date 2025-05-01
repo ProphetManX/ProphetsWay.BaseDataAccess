@@ -1,3 +1,7 @@
+# v2.4.0
+### Adding an interface to identify a base "Soft" entity
+Added an interface that identifies an entity as "Soft" so that the DAL will not actually delete the record, but set the deleted date and use that date value as the "deleted" flag.
+
 # v2.3.0
 ### Updated .Net Framework versions
 Updated the target framework to include .Net 7.0, 8.0, and 9.0 and removed support for .Net Core 2.0, 2.1, and 2.2 as they are no longer supported by Microsoft.
