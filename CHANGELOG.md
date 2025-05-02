@@ -1,3 +1,9 @@
+#2.5.0
+### Added another interface to identify a base "Soft" entity without an ID property
+Added an interface that identifies an entity as "Soft" but doesn't have a specific "Id" property, this is meant to be used in
+conjunction with many-to-many tables, or a table that has a compound key and neither is a basic "Id" property that should be keyed off of.
+
+
 # v2.4.0
 ### Adding an interface to identify a base "Soft" entity
 Added an interface that identifies an entity as "Soft" so that the DAL will not actually delete the record, but set the deleted date and use that date value as the "deleted" flag.
