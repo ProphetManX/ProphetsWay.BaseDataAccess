@@ -8,6 +8,6 @@ namespace ProphetsWay.BaseDataAccess
         
         DateTime? UpdatedDate { get; set; }
         
-        DateTime DeletedDate { get; set; }
+        DateTime? DeletedDate { get; set; }
     }
 }
