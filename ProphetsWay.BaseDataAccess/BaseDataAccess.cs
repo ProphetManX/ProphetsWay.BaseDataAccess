@@ -60,10 +60,4 @@ namespace ProphetsWay.BaseDataAccess
             return (int)mtd.Invoke(this, new object[] { item });
         }
     }
-
-    [Obsolete("You no longer need to use this Generic type of BaseDataAccess, you can use the normal BaseDataAccess. (just remove the generic assignment)", false)]    
-    public abstract class BaseDataAccess<TIdType> : BaseDataAccess, IBaseDataAccess<TIdType>
-    {
-
-    }
 }

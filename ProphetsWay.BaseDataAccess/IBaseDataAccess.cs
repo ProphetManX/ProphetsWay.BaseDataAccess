@@ -77,10 +77,4 @@ namespace ProphetsWay.BaseDataAccess
 		/// </summary>
 		int Delete<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
 	}
-
-	[Obsolete("You no longer need to use this Generic type of IBaseDataAccess, you can use the normal IBaseDataAccess. (just remove the generic assignment)", false)]
-	public interface IBaseDataAccess<TIdType> : IBaseDataAccess
-	{
-
-	}
 }
