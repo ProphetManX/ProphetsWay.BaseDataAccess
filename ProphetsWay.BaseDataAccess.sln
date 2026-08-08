@@ -11,7 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		CHANGELOG.md = CHANGELOG.md
 		LICENSE = LICENSE
 		local-pipeline.yml = local-pipeline.yml
-		README.md = README.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProphetsWay.BaseDataAccess.Tests", "ProphetsWay.BaseDataAccess.Tests\ProphetsWay.BaseDataAccess.Tests.csproj", "{66C6F5CB-ECE8-4FD6-ABA5-35620495BE62}"
