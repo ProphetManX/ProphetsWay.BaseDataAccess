@@ -10,8 +10,8 @@ namespace ProphetsWay.BaseDataAccess
     /// <para>
     /// This exception always indicates a programming or wiring error in the derived Data Access Layer — a method
     /// that was never written, was written with the wrong signature, was declared with insufficient visibility,
-    /// or returns the wrong type. It never indicates a runtime data condition: a missing row, an empty table,
-    /// a null identifier, or a failed query will not produce it.
+    /// or declares the wrong return type. It never indicates a runtime data condition: a missing row, an empty
+    /// table, a null identifier, or a failed query will not produce it.
     /// </para>
     /// <para>
     /// Because the cause is structural, the exception is deterministic. For a given derived type and entity type
@@ -50,26 +50,63 @@ namespace ProphetsWay.BaseDataAccess
     /// base type or interface rather than <c>T</c> itself — is likewise not a match and produces this exception.
     /// </para>
     /// <para>
-    /// <b>2. Identifier property not found.</b> During <c>Get&lt;T&gt;(object id)</c>, a new instance of <c>T</c>
-    /// is constructed and its identifier property is assigned the supplied <c>id</c> before the derived
+    /// <b>2. Identifier property not found.</b> This applies to <c>Get&lt;T&gt;(object id)</c> only. A new instance
+    /// of <c>T</c> is constructed and its identifier property is assigned the supplied <c>id</c> before the derived
     /// <c>Get(T)</c> method is invoked. The property is resolved by name: first <c>{TypeName}Id</c> — for an entity
     /// type named <c>Company</c> that is <c>CompanyId</c> — falling back to <c>Id</c>. If <c>T</c> exposes neither
     /// property, this exception is thrown. Resolution is by name only; no attribute, base type, or interface member
     /// is consulted, and the property's type is not considered when matching.
     /// </para>
     /// <para>
-    /// <b>3. Return type mismatch.</b> A matching derived method was found and invoked without error, but the value
-    /// it returned cannot be assigned to the return type the corresponding <see cref="BaseDataAccess"/> member
-    /// declares. For example, a <c>GetAll(T)</c> that returns a value not implementing
-    /// <see cref="System.Collections.Generic.IList{T}"/>, or a <c>GetCount(T)</c>, <c>Update(T)</c> or
-    /// <c>Delete(T)</c> that does not return an <see cref="int"/>. Earlier versions of this library silently
-    /// produced <c>null</c> in the collection case, masking the defect at the point of failure and surfacing it
-    /// later as an unexplained null reference; the mismatch is now reported directly.
+    /// No other member requires an identifier property. <c>GetAll&lt;T&gt;()</c>, <c>GetCount&lt;T&gt;()</c> and
+    /// <c>GetPaged&lt;T&gt;(int, int)</c> pass <c>null</c> as the entity argument; they never construct a probe
+    /// entity and never look for an identifier property. An entity type exposing neither <c>{TypeName}Id</c> nor
+    /// <c>Id</c> works correctly with those three members and fails only on <c>Get&lt;T&gt;(object id)</c>.
+    /// </para>
+    /// <para>
+    /// <b>3. Return type mismatch.</b> A matching derived method was found, but the return type it <i>declares</i>
+    /// is not compatible with the return type the corresponding <see cref="BaseDataAccess"/> member declares. The
+    /// check is made against the declared type before the method is invoked; the value the method would have
+    /// returned is never examined, and its runtime type is irrelevant.
+    /// <list type="table">
+    /// <listheader><term>Base member</term><description>Required declared return type on the derived method</description></listheader>
+    /// <item><term><c>GetAll&lt;T&gt;()</c></term><description>Assignable to <see cref="System.Collections.Generic.IList{T}"/> — <c>List&lt;T&gt;</c>, <c>T[]</c> and <c>Collection&lt;T&gt;</c> all qualify; <c>IEnumerable&lt;T&gt;</c> does not.</description></item>
+    /// <item><term><c>GetPaged&lt;T&gt;(int, int)</c></term><description>Assignable to <see cref="System.Collections.Generic.IList{T}"/>, as above.</description></item>
+    /// <item><term><c>GetCount&lt;T&gt;()</c></term><description><see cref="int"/>.</description></item>
+    /// <item><term><c>Get&lt;T&gt;(object)</c></term><description><c>T</c>, or a subclass of <c>T</c>.</description></item>
+    /// <item><term><c>Update&lt;T&gt;(T)</c></term><description><see cref="int"/>.</description></item>
+    /// <item><term><c>Delete&lt;T&gt;(T)</c></term><description><see cref="int"/>.</description></item>
+    /// <item><term><c>Insert&lt;T&gt;(T)</c></term><description>Unconstrained. The derived method may declare any return type, including <c>void</c>; whatever it returns is ignored entirely and this circumstance can never arise for <c>Insert</c>.</description></item>
+    /// </list>
+    /// </para>
+    /// <para>
+    /// Because <c>T[]</c> satisfies <see cref="System.Collections.Generic.IList{T}"/> while remaining fixed-size,
+    /// a collection obtained from <c>GetAll&lt;T&gt;()</c> or <c>GetPaged&lt;T&gt;(int, int)</c> should be treated
+    /// as read-only: the static type permits <c>Add</c>, <c>Remove</c>, <c>Insert</c> and <c>Clear</c>, but the
+    /// convention does not promise they are supported, and on an array-backed result they throw
+    /// <see cref="NotSupportedException"/>.
+    /// </para>
+    /// <para>
+    /// Two consequences follow from validating the declared type ahead of invocation. First, <b>a derived method
+    /// that violates the rule is never called.</b> No query runs and no side effect occurs before the exception is
+    /// thrown, which matters most for <c>Update</c> and <c>Delete</c>: a mis-declared method cannot write to the
+    /// database and then fail.
+    /// </para>
+    /// <para>
+    /// Second, <b>a <c>null</c> returned at runtime is never a convention failure.</b> It is forwarded to the
+    /// caller untouched. A <c>Get(T)</c> returning <c>null</c> means no such row exists; a <c>GetAll(T)</c>
+    /// returning <c>null</c> means the Data Access Layer produced no collection. Neither is a wiring error, and
+    /// neither produces this exception. <c>GetCount</c>, <c>Update</c> and <c>Delete</c> cannot return <c>null</c>
+    /// at all, because their declared return type is already constrained to <see cref="int"/>.
     /// </para>
     /// <para>
     /// An exception thrown by the body of a derived method that was successfully located and invoked is not a
     /// convention failure and is not represented by this type; that failure propagates from the derived
-    /// implementation on its own terms.
+    /// implementation on its own terms. The same principle applies to the <c>new T()</c> call that
+    /// <c>Get&lt;T&gt;(object id)</c> makes before dispatching: the <c>new()</c> generic constraint means the
+    /// compiler has already guaranteed <c>T</c> has an accessible parameterless constructor, so the only runtime
+    /// possibility is a constructor that exists but throws. Such an exception propagates to the caller unchanged
+    /// and is never wrapped in a <see cref="DataAccessConventionException"/>.
     /// </para>
     /// </remarks>
     public class DataAccessConventionException : Exception
