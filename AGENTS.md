@@ -240,10 +240,16 @@ the project header and sidecars are what change.
 
 **Family:** Data Access · **Published:** yes, as `ProphetsWay.BaseDataAccess`
 
-A set of **interfaces only** — no implementation. It defines the contract surface for a Data
-Access Layer so business logic can be written against abstractions and a DAL implementation
-swapped out wholesale with minimal blast radius. `ProphetsWay.EFTools` is the Entity Framework
-implementation of these contracts; `ProphetsWay.Example` demonstrates consuming them.
+A **storage-neutral contract vocabulary** for a Data Access Layer — entity markers,
+capability-composed DAO interfaces, and one aggregate DAL interface — **plus an optional
+reflection dispatcher** that lets business logic call those contracts generically. Together they
+let a DAL implementation be swapped out wholesale with minimal blast radius.
+`ProphetsWay.EFTools` is the Entity Framework implementation of these contracts;
+`ProphetsWay.Example` demonstrates consuming them.
+
+**The dispatcher is optional and that optionality is the design.** A consumer may implement
+`IBaseDataAccess` directly and never inherit `BaseDataAccess` — inheriting it buys convention-based
+dispatch in exchange for reflection. Do not describe this package as interfaces-only.
 
 This is the **root of the Data Access family**. A breaking change here cascades into EFTools and
 every consumer. Treat its surface as close to frozen.
@@ -252,29 +258,40 @@ every consumer. Treat its surface as close to frozen.
 
 | Project | Role |
 |---|---|
-| `ProphetsWay.BaseDataAccess/` | The interface library — the entire deliverable |
+| `ProphetsWay.BaseDataAccess/` | The library — contracts plus the reflection dispatcher |
+| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; 76 tests over `net48`/`net8.0`/`net9.0` |
 
-There is no test project and no example project in this repo.
+There is no example project in this repo — `ProphetsWay.Example` fills that role.
 
 ### Key Types
 
-| Type | Role |
-|---|---|
-| `IBaseEntity`, `IBaseIdEntity` | Entity contracts |
-| `IBaseSoftEntity`, `IBaseSoftIdEntity` | Soft-delete entity contracts |
-| `IBaseDao`, `IBaseGetAllDao`, `IBasePagedDao` | DAO contracts by retrieval capability |
-| `IBaseDataAccess` | The DAL root a consumer injects |
-| `BaseDataAccess`, `BaseDataAccessHelper` | The only concrete types |
+| Type | Kind | Role |
+|---|---|---|
+| `IBaseEntity`, `IBaseIdEntity` | interfaces | Entity contracts |
+| `IBaseSoftEntity`, `IBaseSoftIdEntity` | interfaces | Soft-delete entity contracts |
+| `IBaseDao`, `IBaseGetAllDao`, `IBasePagedDao` | interfaces | DAO contracts by retrieval capability |
+| `IBaseDataAccess` | interface | The DAL root a consumer injects |
+| `BaseDataAccess` | public abstract class | The optional reflection dispatcher — largest file in the library |
+| `BaseDataAccessHelper` | internal static class | All reflection logic behind the dispatcher |
+| `DataAccessConventionException` | public exception | Thrown when a derived DAL violates the convention |
 
 Namespace is `ProphetsWay.BaseDataAccess` throughout — correct for the Data Access family.
 
+### Behavioral Contracts Worth Knowing
+
+- **The reflection convention is specified in full in the XML `<remarks>` on
+  `DataAccessConventionException`** — method names and signatures, required visibility, required
+  declared return types, and identifier resolution. Read it before touching `BaseDataAccess` or
+  `BaseDataAccessHelper`; it is the source of truth, not this file.
+- **Exceptions from derived DAL methods propagate unwrapped.** No `TargetInvocationException`
+  wrapper — a breaking change in 3.0.0.
+- **Value-type entities are supported by `Get<T>` but cannot represent "not found" as `null`.**
+
 ### Known Deviations
 
-| # | Deviation | Notes |
-|---|---|---|
-| 1 | **No test project** | Ten interface files with zero coverage. Interfaces need few tests, but `BaseDataAccess` and `BaseDataAccessHelper` are concrete and untested. Adding `ProphetsWay.BaseDataAccess.Tests` is the highest-value gap in this repo. |
-| 2 | TFM list is `net461;net471;net48;net50;net60;net70;net80;net90` | Missing `netstandard2.0`. `net461`, `net471`, `net5.0`, `net6.0`, `net7.0` are end-of-life. For an interfaces-only package, `netstandard2.0;net48;net8.0;net9.0` would cover strictly more consumers with half the targets. |
-| 3 | Undotted TFM monikers (`net80`) | Parses, but non-canonical. |
+**None.** The test project, the TFM list (`netstandard2.0;net48;net8.0;net9.0`), and the canonical
+dotted monikers all landed in 3.0.0, closing every previously listed deviation. Do not re-add
+filler entries here — an empty state is a real state.
 
 Packaging metadata is **complete and correct** — use this repo's `.csproj` as the reference when
 fixing others.

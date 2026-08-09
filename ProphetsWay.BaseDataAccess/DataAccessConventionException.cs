@@ -10,8 +10,9 @@ namespace ProphetsWay.BaseDataAccess
     /// <para>
     /// This exception always indicates a programming or wiring error in the derived Data Access Layer — a method
     /// that was never written, was written with the wrong signature, was declared with insufficient visibility,
-    /// or declares the wrong return type. It never indicates a runtime data condition: a missing row, an empty
-    /// table, a null identifier, or a failed query will not produce it.
+    /// or declares the wrong return type; or an entity type whose identifier property is missing or cannot be
+    /// written to. It never indicates a runtime data condition: a missing row, an empty table, a null identifier,
+    /// or a failed query will not produce it.
     /// </para>
     /// <para>
     /// Because the cause is structural, the exception is deterministic. For a given derived type and entity type
@@ -50,18 +51,42 @@ namespace ProphetsWay.BaseDataAccess
     /// base type or interface rather than <c>T</c> itself — is likewise not a match and produces this exception.
     /// </para>
     /// <para>
-    /// <b>2. Identifier property not found.</b> This applies to <c>Get&lt;T&gt;(object id)</c> only. A new instance
-    /// of <c>T</c> is constructed and its identifier property is assigned the supplied <c>id</c> before the derived
-    /// <c>Get(T)</c> method is invoked. The property is resolved by name: first <c>{TypeName}Id</c> — for an entity
-    /// type named <c>Company</c> that is <c>CompanyId</c> — falling back to <c>Id</c>. If <c>T</c> exposes neither
-    /// property, this exception is thrown. Resolution is by name only; no attribute, base type, or interface member
-    /// is consulted, and the property's type is not considered when matching.
+    /// <b>2. Identifier property not found, or found but not writable.</b> This applies to
+    /// <c>Get&lt;T&gt;(object id)</c> only. A new instance of <c>T</c> is constructed and its identifier property is
+    /// assigned the supplied <c>id</c> before the derived <c>Get(T)</c> method is invoked. The property is resolved
+    /// by name: first <c>{TypeName}Id</c> — for an entity type named <c>Company</c> that is <c>CompanyId</c> —
+    /// falling back to <c>Id</c>. Resolution is by name only; no attribute, base type, or interface member is
+    /// consulted, and the property's type is not considered when matching. Two distinct failures are reported
+    /// through this exception:
+    /// <list type="bullet">
+    /// <item><description>
+    /// <b>Neither property exists.</b> <c>T</c> exposes no <c>{TypeName}Id</c> and no <c>Id</c>, so there is nothing
+    /// to resolve and no identifier can be assigned.
+    /// </description></item>
+    /// <item><description>
+    /// <b>The resolved property has no set accessor.</b> The name matched, but the property is get-only — declared
+    /// with no <c>set</c> or <c>init</c> at all, as an expression-bodied member, or as a <c>readonly</c> computed
+    /// value — so the identifier cannot be written to it.
+    /// </description></item>
+    /// </list>
+    /// Only the complete absence of a set accessor is a failure. <b>A set accessor that exists but is not public is
+    /// fully supported</b>: a <c>private set</c>, <c>protected set</c>, <c>internal set</c> or <c>init</c> accessor
+    /// is resolved and invoked by reflection exactly as a public one is, and an entity that hides its identifier
+    /// setter from ordinary callers in this way works correctly and does not produce this exception. That
+    /// distinction is deliberate — the convention requires the identifier to be <i>assignable</i>, not to be
+    /// <i>publicly</i> assignable — and it is the opposite of the visibility rule that governs circumstance 1,
+    /// where a non-public method is invisible to the lookup.
+    /// </para>
+    /// <para>
+    /// The check on the identifier property is made before the probe entity is constructed, so like the return type
+    /// check in circumstance 3 it costs nothing and runs nothing when it fails.
     /// </para>
     /// <para>
     /// No other member requires an identifier property. <c>GetAll&lt;T&gt;()</c>, <c>GetCount&lt;T&gt;()</c> and
     /// <c>GetPaged&lt;T&gt;(int, int)</c> pass <c>null</c> as the entity argument; they never construct a probe
     /// entity and never look for an identifier property. An entity type exposing neither <c>{TypeName}Id</c> nor
-    /// <c>Id</c> works correctly with those three members and fails only on <c>Get&lt;T&gt;(object id)</c>.
+    /// <c>Id</c>, or exposing one of them get-only, works correctly with those three members and fails only on
+    /// <c>Get&lt;T&gt;(object id)</c>.
     /// </para>
     /// <para>
     /// <b>3. Return type mismatch.</b> A matching derived method was found, but the return type it <i>declares</i>

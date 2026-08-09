@@ -62,15 +62,30 @@ namespace ProphetsWay.BaseDataAccess
 		/// member; nothing here constrains every entity in a Data Access Layer to share one identifier type.
 		/// </param>
 		/// <returns>
-		/// The matching entity, or <c>null</c> when no entity carries that identifier. A <c>null</c> result is an
-		/// ordinary outcome, not an error.
+		/// The matching entity. When <typeparamref name="TEntityType"/> is a <b>reference type</b>, <c>null</c> is
+		/// returned when no entity carries that identifier, and a <c>null</c> result is an ordinary outcome rather
+		/// than an error.
 		/// </returns>
 		/// <remarks>
+		/// <para>
 		/// Which property <paramref name="id"/> refers to is settled <b>by name</b>: <c>{TypeName}Id</c> first —
 		/// for an entity type named <c>Company</c> that is <c>CompanyId</c> — falling back to <c>Id</c>. The
 		/// property's type is never considered. <see cref="DataAccessConventionException"/> specifies that
 		/// resolution in full, along with how an implementation deriving from <see cref="BaseDataAccess"/> reports
-		/// an entity type that exposes neither property.
+		/// an entity type that exposes neither property, or exposes one with no set accessor.
+		/// </para>
+		/// <para>
+		/// <b>Value-type entities cannot report "not found" as <c>null</c>.</b> The constraint on
+		/// <typeparamref name="TEntityType"/> is satisfied by a <c>struct</c> as readily as by a <c>class</c>, and
+		/// for a value-type entity <c>null</c> is simply not representable in the return type — an implementation
+		/// deriving from <see cref="BaseDataAccess"/> must declare its <c>Get</c> with a return type assignable to
+		/// the entity type, which for a value type admits only that type itself. A Data Access Layer keying on a
+		/// value-type entity must therefore signal a miss some other way: return a recognizable default or sentinel
+		/// value that the caller checks for, expose the lookup through a member outside this interface that can
+		/// express absence, or model the entity as a reference type so that <c>null</c> is available. No member of
+		/// this interface exists to distinguish "found the default value" from "found nothing" for a value-type
+		/// entity; a design needing that distinction should not put the entity in a <c>struct</c>.
+		/// </para>
 		/// </remarks>
 		TEntityType Get<TEntityType>(object id) where TEntityType : IBaseEntity, new();
 
