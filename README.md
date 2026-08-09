@@ -1,157 +1,292 @@
 # ProphetsWay.BaseDataAccess
 
-Build Status:  
+Define your data-access contracts once, keep business logic independent of storage technology, and replace the DAL without rewriting its consumers.
+
 [![Build Status](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_apis/build/status/ProphetManX.ProphetsWay.BaseDataAccess?repoName=ProphetManX%2FProphetsWay.BaseDataAccess&branchName=main)](https://dev.azure.com/ProphetsWay/ProphetsWay%20GitHub%20Projects/_build/latest?definitionId=23&repoName=ProphetManX%2FProphetsWay.BaseDataAccess&branchName=main)
+![NuGet](https://img.shields.io/nuget/v/ProphetsWay.BaseDataAccess)
 
-BaseDataAccess is a light library that is meant to help decouple your software's business logic projects from your Data Access Layer (DAL) implementation. 
-With some new technologies, it is easy to allow yourself to create entity/models in your DAL and use them directly in your business layers, however this
-makes it difficult to replace your DAL implementation if you decide to change how/what is hosting your data.  By adhering to a specific project dedicated to 
-the models and interfaces required for your solution, you aren't restricted to the models that are created for you by your data layer implementation.
+## Why BaseDataAccess
 
-## Getting Started
+When domain models and persistence APIs live inside a specific DAL implementation, business logic becomes coupled to that database or framework. Replacing Entity Framework, a SQL provider, or even the storage model then becomes an application-wide change.
 
-BaseDataAccess is a lightweight project that consists of mostly just interfaces, but it also has a base abstract class you can utilize for 
-convenience within your project.  This base class does use Reflection to work some magic, and if you're concerned about speed, you can override 
-those virtual methods and manually evaluate them (or not use the base abstract class and just implement the interface on your own).
+BaseDataAccess gives you storage-neutral entity and DAO contracts. Your business layer depends on those contracts, while each Data Access Layer (DAL) implementation satisfies them independently.
 
-### Prerequisites
+### Highlights
 
-You can pull a copy of the source code from GitHub, or you can reference the library from NuGet.org from within Visual Studio.
+- Swap DAL implementations while keeping the business-facing contract stable.
+- Give each entity a strongly typed DAO surface with optional CRUD, list, and paging contracts.
+- Expose one aggregate data-access interface for dependency injection and testing.
+- Use generic CRUD dispatch when it helps, or implement `IBaseDataAccess` directly when reflection is not appropriate.
+- Mix identifier types across entities; generic `Get<T>(object id)` does not impose one key type on the whole DAL.
 
-```
-Install-Package ProphetsWay.BaseDataAccess 
-dotnet add package ProphetsWay.BaseDataAccess 
-```
+## Install
 
-### Referencing and Using
+With the .NET CLI:
 
-The approach to use this project is that you want to create a new project in your solution to specify the data access requirements.  Generally my 
-naming convention is "[ProjectName].DataAccess" and then the project that implements the actual data access layer is "[ProjectName].DataAccess.[ImplementationName]".
-For "ImplementationName" I generally use a shortcut name to identify what the implementation is working with (ex: MSSQL, MySQL, Oracle, SQLite).
-
-
-#### [ProjectName].DataAccess
-
-In this project, I recommend the folder layout as follows:
-root
- - Entities / Models Folder
- - IDaos Folder
- - I[ProjectName]DataAccess Class
-
-##### Entities/Models
-
-The Entities / Models folder name is really a personal preference on the naming convention.  The point is that you define the entities that you will be using
-in your solution here.  Defining them outside of the DAL implementation allows you to use them however you see fit within your application.  Any new DAL implementation
-will have to interact with the models defined here-in.  All of your entities must inherit the interface **IBaseEntity**.  This is to flag the entities as 
-compatible with the other interfaces. 
-
-##### IDaos
-
-The IDaos folder is meant to specify what actions you want for each specific entity in your Entities folder.  Generally you should name your interfaces 
-I[EntityName]Dao so that it's quick and easy to identify which files reference which entities.  Your interface should inherit from one of the base DAO interfaces.
-Using one of the base interfaces will automatically include specific methods, however this DAO is where you will also specify any additional functionality 
-that you need this entity to have.  (ex: ```IList<Customer> GetCustomersByCompanyId(int companyId); ``` to be specified on the ```ICustomerDao```)
-All of the base interfaces are generic and require a type T to be specified, here you will specify the type of the entity this DAO is for.
-
-```C#
-public interface ICustomerDao : IBaseDao<Customer>
+```text
+dotnet add package ProphetsWay.BaseDataAccess
 ```
 
-###### IBaseDao
+With the NuGet Package Manager Console:
 
-IBaseDao specifies your basic CRUD calls: **Get**, **Insert**, **Update**, and **Delete**.  Each call does require a parameter of the type of entity to be passed
-to it, even for Get and Delete where you might normally just need the "Id" of the record.  This is done on purpose so that all interfaces for all entities have
-unique method signatures for use in the master interface (discussed in the next section).  If you do not like/want this style of functionality, you can skip 
-all three of these BaseDao interfaces completely and manually create all the CRUD calls in each entity IDao (as well as whatever other functionality you need).
-The only thing to remember is that you must make each method signature unique 
-(so instead of just ```T Get(T item);``` you have ```Customer GetCustomer(int customerId);```))
-
-```C#
-T Get(T item);
-void Insert(T item);
-int Update(T item);
-int Delete(T item);
+```powershell
+Install-Package ProphetsWay.BaseDataAccess
 ```
 
-###### IBaseGetAllDao
+Targets: .NET Standard 2.0, .NET Framework 4.8, .NET 8.0, and .NET 9.0.
 
-IBaseGetAllDao inherits from IBaseDao, but additionally specifies a **GetAll** call.  This call also requires the parameter similar to the above mentioned situation.
-```C#
-IList<T> GetAll(T item);
-```
+## Quick Start
 
-###### IBasePagedDao
-IBasePagedDao also inherits from IBaseDao, and additionally specifies a **GetCount** and **GetPaged** calls.  More of the same with the required parameters, 
-however these functions are used to get the upper boundary of how many of an entity you have, and then getting a particular subset of them; useful for user interface
-based queries when trying to optimize data being queried and sent to your front end.
+Create a contracts project such as `YourApp.DataAccess`. Put its entities, DAO interfaces, and aggregate DAL interface there so neither the business layer nor the contracts project references a storage implementation.
 
-```C#
-IList<T> GetPaged(T item, int skip, int take);
-int GetCount(T item);
-```
+> **Illustrative** — not currently present in the repo.
 
-##### I[ProjectName]DataAccess
-This is the master interface for your DAL implementation.  This shouldn't have any methods manually specified in it, this should be an interface of interfaces.
-In here you'll inherit all the IDao's you created for each of your entities before.  In some cases you might have some functionality that doesn't persist to a 
-particular entity and don't feel like it fits in an any entity's DAO, in those cases you would put the method signature here.
+```csharp
+using ProphetsWay.BaseDataAccess;
 
-
-#### [ProjectName].DataAccess.[ImplementationName]
-
-So technically, you can implement your DAL however you want to, so long as your main point of instantiation inherits/implements the IDataAccess interface defined above.
-Currently my approach has been to create a DAO for each IDao specified, that way it's easier to find things in your source code.  
-```internal class CustomerDao : ICustomerDao``` will set you up so that all the required CRUD calls and other methods you specified will be added and typed to 
-the correct entity type.  I recommend using internal on the specific DAO's as these are separate for the convenience of the developer and separation of logic, but
-shouldn't be accessible outside of the project, only the class implementing IDataAccess should be created and accessible outside of this project.
-
-Depending on your actual implementation, you might have a bunch of other stuff in this project to support how the DAOs actually interact with the data storage
-you're using.  However the final piece to mention here is the main IDataAccess implementation.  Generally I name this class [ProjectName]DataAccess, but it doesn't
-matter.  If you created the separate DAOs for each entity, then in here you will have to instantiate each of those DAOs and just pass thru each method signature/call
-into each specific DAO.
-
-
-```C#
-public class ExampleDataAccess : BaseDataAccess, IExampleDataAccess
+public sealed class Customer : IBaseIdEntity<int>
 {
-    private readonly ICustomerDao _customerDao = new CustomerDao();
-        
-    public Customer Get(Customer item){
-        return _customerDao.Get(item);
+    public int Id { get; set; }
+    public string Name { get; set; }
+}
+
+public interface ICustomerDao : IBasePagedDao<Customer> { }
+
+public interface IAppDataAccess : IBaseDataAccess, ICustomerDao { }
+```
+
+Your business services can now depend on `IAppDataAccess`. A project such as `YourApp.DataAccess.MSSQL`, `YourApp.DataAccess.MySQL`, `YourApp.DataAccess.Oracle`, `YourApp.DataAccess.SQLite`, or `YourApp.DataAccess.EF` supplies the implementation without leaking that technology into the contract.
+
+## Core Concepts
+
+### Contracts stay above implementations
+
+The package supplies a vocabulary for the boundary between business logic and persistence. `IBaseEntity` marks participating entities, the DAO interfaces describe entity-specific operations, and `IBaseDataAccess` describes operations shared by the complete DAL.
+
+```mermaid
+flowchart LR
+    Business[Business logic] -->|depends on| Contract[YourApp.DataAccess contracts]
+    Contract -->|uses| Package[ProphetsWay.BaseDataAccess]
+    Sql[YourApp.DataAccess.MSSQL] -. implements .-> Contract
+    Memory[YourApp.DataAccess.NoDB] -. implements .-> Contract
+    Ef[YourApp.DataAccess.EF] -. implements .-> Contract
+```
+
+The implementation dependency points inward toward the contract. The contracts project must not reference a provider-specific implementation or expose types such as `DbContext` or `SqlConnection`.
+
+### DAO contracts compose by capability
+
+`IBaseDao<T>` defines CRUD. `IBaseGetAllDao<T>` and `IBasePagedDao<T>` independently add retrieval capabilities, so an entity exposes only the operations it needs. Add domain-specific members to the entity DAO rather than forcing them into a universal repository abstraction.
+
+```mermaid
+flowchart TD
+    Entity[IBaseEntity]
+    Id[IBaseIdEntity of TId]
+    Soft[IBaseSoftEntity]
+    SoftId[IBaseSoftIdEntity of TId]
+    Dao[IBaseDao of T]
+    All[IBaseGetAllDao of T]
+    Paged[IBasePagedDao of T]
+
+    Id --> Entity
+    Soft --> Entity
+    SoftId --> Id
+    SoftId --> Soft
+    Dao --> Entity
+    All --> Dao
+    Paged --> Dao
+```
+
+`IBaseGetAllDao<T>` and `IBasePagedDao<T>` are siblings. Paging does not imply that loading every record is available.
+
+### Generic dispatch is optional
+
+`BaseDataAccess` implements the generic members of `IBaseDataAccess` by locating an exact public instance overload on the derived DAL. This lets callers write `dal.Get<Customer>(id)` while the concrete DAL keeps strongly typed methods such as `Get(Customer item)`.
+
+```mermaid
+sequenceDiagram
+    participant Caller
+    participant Base as BaseDataAccess
+    participant DAL as Concrete DAL
+
+    Caller->>Base: Get<Customer>(42)
+    Base->>Base: Find public Get(Customer)
+    Base->>Base: Validate declared return type
+    Base->>Base: Create Customer and assign CustomerId or Id
+    Base->>DAL: Get(customerProbe)
+    DAL-->>Caller: Customer or null
+```
+
+Reflection is a convenience, not a requirement. You can override the virtual generic methods, or implement `IBaseDataAccess` directly, when you want explicit dispatch or need to avoid reflection.
+
+## API Reference
+
+### Entity contracts
+
+| Type | Member | Purpose |
+| --- | --- | --- |
+| `IBaseEntity` | Marker interface | Identifies an entity that can participate in the DAL contracts. |
+| `IBaseIdEntity<T>` | `T Id { get; set; }` | Adds a strongly typed `Id` property. |
+| `IBaseSoftEntity` | `CreatedDate`, `UpdatedDate`, `DeletedDate` | Carries timestamps for creation, updates, and soft deletion. It does not itself implement delete behavior. |
+| `IBaseSoftIdEntity<T>` | Combined contract | Combines `IBaseSoftEntity` and `IBaseIdEntity<T>`. |
+
+### DAO contracts
+
+| Type | Member | Purpose |
+| --- | --- | --- |
+| `IBaseDao<T>` | `Get(T)` | Retrieves one entity using the identifying values on the supplied entity. |
+| `IBaseDao<T>` | `Insert(T)` | Inserts an entity. The contract permits the implementation to assign its ID. |
+| `IBaseDao<T>` | `Update(T)` | Updates an entity and returns the affected-row count. |
+| `IBaseDao<T>` | `Delete(T)` | Deletes an entity and returns the affected-row count. |
+| `IBaseGetAllDao<T>` | `GetAll(T)` | Retrieves all entities of `T`; the argument disambiguates the entity overload. |
+| `IBasePagedDao<T>` | `GetPaged(T, int skip, int take)` | Retrieves a subset of entities. |
+| `IBasePagedDao<T>` | `GetCount(T)` | Returns the total count used to calculate paging bounds. |
+
+### Aggregate DAL contracts
+
+| Type | Member | Purpose |
+| --- | --- | --- |
+| `IBaseDataAccess` | `Get<T>(object id)` | Retrieves an entity by assigning the ID to a new probe entity. |
+| `IBaseDataAccess` | `GetAll<T>()` | Dispatches to `GetAll(T)` without requiring the caller to create a probe. |
+| `IBaseDataAccess` | `GetPaged<T>(int skip, int take)` | Dispatches to `GetPaged(T, int, int)`. |
+| `IBaseDataAccess` | `GetCount<T>()` | Dispatches to `GetCount(T)`. |
+| `IBaseDataAccess` | `Insert<T>(T)`, `Update<T>(T)`, `Delete<T>(T)` | Exposes generic write operations. |
+| `IBaseDataAccess` | `TransactionStart()`, `TransactionCommit()`, `TransactionRollBack()` | Lets business logic coordinate multiple DAL calls in one transaction. |
+| `BaseDataAccess` | Virtual generic operations | Provides the reflection-based implementation of the generic operations. |
+| `DataAccessConventionException` | Exception type | Reports deterministic method, return-type, or identifier-property wiring errors. |
+
+## The BaseDataAccess Convention
+
+If your concrete DAL inherits `BaseDataAccess`, each generic call requires an exact public instance method. Entity parameters cannot be replaced by `IBaseEntity`, a base class, or another assignable type.
+
+| Generic call | Required concrete method | Required declared return type |
+| --- | --- | --- |
+| `Get<T>(id)` | `Get(T)` | `T` or a subclass of `T` |
+| `GetAll<T>()` | `GetAll(T)` | Assignable to `IList<T>` |
+| `GetPaged<T>(skip, take)` | `GetPaged(T, int, int)` | Assignable to `IList<T>` |
+| `GetCount<T>()` | `GetCount(T)` | `int` |
+| `Insert<T>(item)` | `Insert(T)` | Unconstrained; the result is discarded |
+| `Update<T>(item)` | `Update(T)` | `int` |
+| `Delete<T>(item)` | `Delete(T)` | `int` |
+
+For `Get<T>(id)`, the dispatcher creates `T` and sets `{TypeName}Id` first, falling back to `Id`. The property must have a setter. Other operations do not require either property.
+
+The dispatcher validates the method and its declared return type before invoking it. A bad `Update` or `Delete` signature therefore fails before it can write data. Exceptions thrown by the concrete DAL, the entity constructor, or the identifier setter reach the caller as their original types with their original stack traces; they are not wrapped in `TargetInvocationException`.
+
+`Get<T>`, `GetAll<T>`, and `GetPaged<T>` may return `null`. Collection return values should be treated as read-only because arrays satisfy `IList<T>` but do not support mutation.
+
+## Common Scenarios
+
+### Compose one business-facing DAL contract
+
+The companion [ProphetsWay.Example](https://github.com/ProphetManX/ProphetsWay.Example) project uses an interface of interfaces. This is real code from that repository:
+
+```csharp
+using ProphetsWay.BaseDataAccess;
+using ProphetsWay.Example.DataAccess.IDaos;
+
+namespace ProphetsWay.Example.DataAccess
+{
+    public interface IExampleDataAccess : IBaseDataAccess, ICompanyDao, IJobDao,
+        IUserDao, ITransactionDao, IResourceDao
+    {
     }
 }
 ```
 
-The class ```BaseDataAccess``` has some generic methods to execute the CRUD calls.  These methods
-are available to generically call any entity from the DataAccess object without having to 
-explicitly know what type of entity it is (so long as it implements ```IBaseEntity```)
-```C#
-    void Insert<T>(T item) where T : IBaseEntity, new()
-    T Get<T>(object id) where T : IBaseEntity, new()
-    int Update<T>(T item) where T : IBaseEntity, new()
-    int Delete<T>(T item) where T : IBaseEntity, new()
+Consumers depend on `IExampleDataAccess`, not on its NoDB or Entity Framework implementation.
+
+### Add entity-specific operations
+
+DAO interfaces can extend a base capability and add domain-specific queries. The Example project defines:
+
+```csharp
+using ProphetsWay.BaseDataAccess;
+using ProphetsWay.Example.DataAccess.Entities;
+
+namespace ProphetsWay.Example.DataAccess.IDaos
+{
+    public interface ICompanyDao : IBasePagedDao<Company>
+    {
+        Company GetCustomCompanyFunction(int id);
+    }
+}
 ```
 
+### Call through the generic surface
 
+The in-repo test suite verifies this call shape against a well-formed concrete DAL:
 
-## Running the tests
+```csharp
+var dal = new WellFormedDataAccess();
+dal.GetResult = new Company { CompanyId = 99, Name = "Returned" };
 
-The library has 35 unit tests currently.  I tried to cover everything possible; 
-however they are created in an Example project within another repository.
-https://github.com/ProphetManX/ProphetsWay.Example
+var result = dal.Get<Company>(42);
+```
 
+The dispatcher passes a `Company` probe whose `CompanyId` is `42` to the concrete `Get(Company)` overload and returns that overload's result unchanged.
+
+## Architecture & Design Decisions
+
+### Why methods accept an entity parameter
+
+Every entity-specific DAO uses the same operation names. Passing `T` gives each overload a unique CLR signature, allowing one aggregate interface and implementation to expose `Get(Company)`, `Get(User)`, and other entity operations together. For `GetAll`, `GetCount`, and `GetPaged`, the parameter is a type discriminator and the generic dispatcher passes `null`.
+
+If this convention does not fit your API, define explicit methods such as `GetCustomer(int customerId)` in your own DAO interfaces and implement `IBaseDataAccess` without inheriting `BaseDataAccess`.
+
+### Why contracts and implementations are separate projects
+
+A typical solution uses a base contracts project and one project per replaceable implementation:
+
+```text
+YourApp.DataAccess
+|- Entities/
+|- IDaos/
+`- IYourAppDataAccess.cs
+
+YourApp.DataAccess.MSSQL
+|- Daos/
+`- YourAppDataAccess.cs
+```
+
+The contracts project owns the models used by the rest of the application. Every implementation adapts its storage technology to those models, rather than making business logic consume provider-generated entities. Focused concrete DAO classes can remain internal; only the aggregate DAL needs to be available to consumers.
+
+### Reflection trade-off
+
+The generic dispatcher removes repetitive type switches and probe construction from callers, but reflection adds runtime convention checks and overhead. The convention is strict and deterministic, and its failures use `DataAccessConventionException` with the offending type and signature. Applications with tighter performance requirements can override the virtual members or avoid the abstract base class entirely.
+
+### Soft-delete contracts describe data, not policy
+
+`IBaseSoftEntity` standardizes lifecycle timestamps. It does not automatically filter deleted rows or turn `Delete` into an update; each DAL implementation owns that behavior.
+
+## Building & Testing Locally
+
+```powershell
+git clone https://github.com/ProphetManX/ProphetsWay.BaseDataAccess
+cd ProphetsWay.BaseDataAccess
+dotnet restore
+dotnet build
+dotnet test
+```
+
+The `ProphetsWay.BaseDataAccess.Tests` project contains 68 xUnit tests covering dispatch, method lookup, return types, identifier assignment, null behavior, struct entities, shadowed methods, and exception propagation. The companion [ProphetsWay.Example](https://github.com/ProphetManX/ProphetsWay.Example) repository demonstrates the same contracts with a NoDB implementation; the EFTools repository supplies an Entity Framework implementation.
+
+## Contributing
+
+Keep public contracts storage-neutral and preserve the exact reflection convention when changing `BaseDataAccess`. Add or update xUnit tests for behavioral changes, use Shouldly assertions, and run the full test suite before submitting a change.
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/ProphetManX/ProphetsWay.BaseDataAccess/tags). 
+This project follows [Semantic Versioning](http://semver.org/). Available releases are listed in the [repository tags](https://github.com/ProphetManX/ProphetsWay.BaseDataAccess/tags).
 
 ## Authors
 
-* **G. Gordon Nasseri** - *Initial work* - [ProphetManX](https://github.com/ProphetManX)
+Created by [G. Gordon Nasseri](https://github.com/ProphetManX). See the repository's [contributors](https://github.com/ProphetManX/ProphetsWay.BaseDataAccess/graphs/contributors) for additional participants.
 
-See also the list of [contributors](https://github.com/ProphetManX/ProphetsWay.BaseDataAccess/graphs/contributors) who participated in this project.
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md). Version 3.0.0 introduced strict convention validation, unwrapped implementation exceptions, consolidated target frameworks, and the in-repo test suite.
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
-
-
+MIT License - see [LICENSE](LICENSE).

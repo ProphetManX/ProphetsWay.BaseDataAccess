@@ -1,10 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>
-			net461;net471;net48;
-			net50;net60;net70;net80;net90;
-		</TargetFrameworks>
+		<TargetFrameworks>netstandard2.0;net48;net8.0;net9.0</TargetFrameworks>
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>Prophet's Way</Company>
 		<Product>BaseDataAccess</Product>
@@ -35,7 +32,7 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 
 		<Copyright />
 		<PackageProjectUrl />
-		<PackageTags />
+		<PackageTags>dal data-access data-access-layer repository abstraction interfaces decoupling</PackageTags>
 		<PackageReleaseNotes />
 		<NeutralLanguage />
 		<AssemblyVersion />

@@ -1,3 +1,91 @@
+# v3.0.0
+### Exceptions from your DAL now reach you unwrapped — read this before upgrading
+This is the one change in this release that breaks quietly. Every one of the generic calls on ```BaseDataAccess```
+reaches your derived method through Reflection, and Reflection used to wrap anything that method threw in a
+```TargetInvocationException```. That wrapper is gone. Whatever your ```Get```, ```GetAll```, ```GetPaged```,
+```GetCount```, ```Insert```, ```Update``` or ```Delete``` throws now arrives at the caller as its own type with its
+original stack trace intact, and the same is now true of an exception thrown by an entity's parameterless constructor
+or by its identifier property setter.
+
+If you wrote a handler that reaches through the wrapper, it will no longer match and your handling will simply stop
+running — there is no compiler error and no warning to tell you.
+
+```c#
+	//no longer catches anything - the handler is now dead code
+	try { dal.Update(company); }
+	catch (TargetInvocationException ex) { Log(ex.InnerException); }
+
+	//catch what your DAL actually throws
+	try { dal.Update(company); }
+	catch (SqlException ex) { Log(ex); }
+```
+
+Search your solution for ```TargetInvocationException``` before you upgrade. If a call site wrapped one of these
+methods, that is the code that has to change.
+
+### The method convention is now enforced strictly, and enforced before anything is written
+The remaining breaking changes all fail loudly on the first call, so they will find you rather than the other way
+around.
+
+Parameter matching is now exact. A convention method declared with a base class or interface parameter — 
+```Insert(IBaseEntity item)``` standing in for every entity type — used to be matched by the Reflection binder and
+will no longer be found. Declare the method once per entity type, with that entity type as the parameter.
+
+Declared return types are validated *before* the method is invoked. ```GetAll``` and ```GetPaged``` must declare a
+type assignable to ```IList<T>```, ```Get``` must declare ```T``` or a subclass of it, and ```GetCount```,
+```Update``` and ```Delete``` must declare ```int```. ```Insert``` remains unconstrained and may return anything,
+including ```void```. Previously a mis-declared ```Update``` or ```Delete``` ran to completion, wrote to the
+database, and only then failed casting its result; that no longer happens.
+
+```static``` convention methods are no longer found. The lookup has always been documented as targeting the public
+surface of your DAL, but ```static``` methods were incidentally reachable; they are not any more. Make the method a
+public instance method.
+
+The obsolete ```IBaseDataAccess<TIdType>``` and ```BaseDataAccess<TIdType>```, deprecated back in v2.1.0, have been
+removed. The fix is the one the obsolete warning has been suggesting for four minor versions — drop the generic
+argument and use ```IBaseDataAccess``` / ```BaseDataAccess```.
+
+### Target frameworks consolidated
+Now targeting ```netstandard2.0;net48;net8.0;net9.0```, replacing ```net461;net471;net48;net50;net60;net70;net80;net90```.
+No consumer is stranded: ```net461``` and ```net471``` resolve against ```netstandard2.0```, as do .NET 5, 6 and 7,
+all three of which are past end of support.
+
+### Fixed
+A struct entity silently received a default identifier from ```Get<T>```. The probe entity was boxed at the moment
+the identifier was assigned, so the mutation landed on a copy that was then discarded and your ```Get``` method
+received an entity with an unset key — no exception, just the wrong row or no row. Struct entities now receive the
+identifier they were asked for.
+
+```GetAll<T>``` and ```GetPaged<T>``` returned ```null``` when the derived method declared a return type that was not
+an ```IList<T>```, because the result was coerced with ```as```. A wrong return type is now reported as the wiring
+error it is.
+
+An identifier property with no set accessor produced a raw ```ArgumentException``` from the Reflection layer. It is
+now reported as a convention error naming the entity and the property.
+
+A convention method hidden with ```new``` bound unpredictably, because the order Reflection returns same-named
+methods in is unspecified. The hierarchy is now walked one level at a time, most derived first, so the method
+selected is the one a compile-time call against the same type would bind to.
+
+### Added
+```DataAccessConventionException``` replaces the generic ```Exception``` previously thrown for wiring errors, so
+these can be caught and filtered distinctly from data errors. It carries the full specification of the convention in
+its own documentation — the method name and signature looked for, the visibility required, the return type each one
+must declare, and how the identifier property is resolved for ```Get```. If you are writing a class that inherits
+```BaseDataAccess```, read that type first.
+
+Its messages render types the way you wrote them, so a signature reads as ```(Company, int, int)``` rather than
+```(Company, Int32, Int32)```, and a return type as ```IList<Company>``` rather than in namespace-qualified
+backtick-arity form.
+
+```ProphetsWay.BaseDataAccess.Tests``` was added — the first automated coverage this library has had, 68 tests
+pinning the convention, the dispatch behavior, and every fix listed above.
+
+### A note on visibility
+The convention has always required a public instance method. That has not changed in this release; it is now stated
+in the documentation and covered by tests rather than left to be discovered.
+
+
 #2.5.0
 ### Added another interface to identify a base "Soft" entity without an ID property
 Added an interface that identifies an entity as "Soft" but doesn't have a specific "Id" property, this is meant to be used in
