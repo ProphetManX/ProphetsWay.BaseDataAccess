@@ -95,11 +95,21 @@ namespace ProphetsWay.BaseDataAccess
             return (int)mtd.InvokeUnwrapped(this, new object[] { null });
         }
 
+        /// <inheritdoc cref="IBaseDataAccess.TransactionCommit"/>
         public abstract void TransactionCommit();
 
+        /// <inheritdoc cref="IBaseDataAccess.TransactionRollBack"/>
         public abstract void TransactionRollBack();
 
+        /// <inheritdoc cref="IBaseDataAccess.TransactionStart"/>
         public abstract void TransactionStart();
+
+        /// <summary>
+        /// Releases the resources the derived Data Access Layer holds. Abstract because this class dispatches by
+        /// reflection and owns no connection, context or transaction state of its own; the binding disposal rules
+        /// are specified on <see cref="IBaseDataAccess"/>.
+        /// </summary>
+        public abstract void Dispose();
 
         /// <summary>
         /// Assumes that your ID property on your entities is either named "Id" or "EntityTypeNameId".  A probe

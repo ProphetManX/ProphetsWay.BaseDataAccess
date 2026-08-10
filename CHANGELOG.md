@@ -23,6 +23,102 @@ running — there is no compiler error and no warning to tell you.
 Search your solution for ```TargetInvocationException``` before you upgrade. If a call site wrapped one of these
 methods, that is the code that has to change.
 
+### Your Data Access Layer must now implement ```Dispose```
+```IBaseDataAccess``` extends ```IDisposable```, so every implementation has to supply ```Dispose```. If you inherit
+```BaseDataAccess``` it is declared ```public abstract void Dispose();```, which means your class will not compile
+until you override it. That includes a Data Access Layer holding nothing disposable at all — you still write the
+override, empty. Making it abstract rather than virtual is the point: an empty ```Dispose``` should be a decision you
+made, not a default you inherited without reading.
+
+```c#
+	//a DAL that owns no connection, context or transaction still writes this
+	public override void Dispose() { }
+```
+
+The quieter consequence is at your composition root. If you register ```IBaseDataAccess``` in a dependency-injection
+container, the container now disposes your Data Access Layer at the end of the scope it was resolved in — it has no
+reason to have done so before. Nothing at your call sites changes, but the lifetime of the object underneath them
+does, and a Data Access Layer that was quietly outliving its scope will stop doing so. Registering it as a singleton
+is one way to control that; which lifetime is right is your call, but it is now a call you have to make.
+
+### The disposal contract is now specified
+```Dispose``` is idempotent — a second call, and every call after it, is a no-op that must never throw. Read that
+against the transaction members, which set the opposite precedent deliberately: calling ```TransactionCommit``` or
+```TransactionRollBack``` twice throws, because a repeated transaction call means the caller has lost track of its own
+control flow, while disposing an already-disposed object is a normal thing for cleanup code to do.
+
+Calling any member *other than* ```Dispose``` on a disposed instance throws ```ObjectDisposedException```. That type
+derives from ```InvalidOperationException```, which is what the transaction members throw, and the overlap is
+intentional — one ```catch (InvalidOperationException)``` covers both "you used this wrong" cases rather than making
+you write two handlers for the same class of mistake.
+
+```Dispose``` itself never throws, including when a rollback it performs fails. Throwing from ```Dispose``` masks
+whatever exception was already in flight inside a ```using``` block, turning a diagnosable failure into a misleading
+one, and an abandoned transaction is rolled back by the database anyway once the connection drops. A transaction still
+open at disposal is **rolled back, never committed** — an unclosed transaction is an abandoned one, and abandoned work
+is not work you meant to keep.
+
+Finally: your Data Access Layer disposes what it created, and nothing else. If a caller hands it a connection, a
+context or a transaction, disposing the Data Access Layer must not dispose that resource — the caller still owns it.
+That is where double-dispose bugs live, so it is now written down rather than assumed.
+
+### The transaction contract is now specified
+One transaction per Data Access Layer instance. A second ```TransactionStart``` while one is already open throws
+```InvalidOperationException```, and so does a commit or rollback with none open. Transactions do not nest, and that
+is a decision rather than an omission — these three members are a scalpel for making a bounded batch of writes atomic,
+not an ambient transaction system and not a unit-of-work framework.
+
+Scope is the **instance**, not the connection. Two instances pointed at the same database do not share a transaction,
+and work done through one is not enrolled in the other's.
+
+A failed commit leaves no transaction open **and discards the writes made inside it**. Once ```TransactionCommit```
+returns or throws, the instance has nothing open, so a failed commit must not be followed by ```TransactionRollBack```
+— there is nothing left to roll back and that call throws.
+
+```c#
+	//there is no transaction left to roll back - this catch block throws its own exception
+	try { dal.TransactionCommit(); }
+	catch (Exception) { dal.TransactionRollBack(); }
+```
+
+Outside a transaction every call auto-commits on its own, so you do not need one to make a single write durable. And
+ambient transactions are left alone — these members neither create a ```TransactionScope``` nor suppress one, so
+whatever your provider already does inside an enclosing scope keeps happening unchanged.
+
+### Documentation corrections — the first one could have cost you a debugging session
+```GetAll```, ```GetPaged``` and ```GetCount``` documented their ```item``` parameter as needing to be "an instance of
+itself". That was simply false. The generic dispatcher invokes your derived method with a literal ```null``` — 
+```default(T)``` when the entity is a value type — so the parameter is a **type selector** and must never be read. An
+implementer who trusted the old documentation and dereferenced it compiled clean and threw ```NullReferenceException```
+the first time the call arrived through the dispatcher, with nothing in the build to warn them.
+
+```c#
+	//throws when the call comes through the generic dispatcher - item is null
+	public IList<Company> GetAll(Company item) => _ctx.Companies.Where(c => c.Region == item.Region).ToList();
+
+	//the parameter selects the type and nothing else
+	public IList<Company> GetAll(Company item) => _ctx.Companies.ToList();
+```
+
+```IBaseDao<T>.Get``` promised to "return the passed Object", which constrained instance identity for no reason.
+Whether an implementation populates the instance it was handed or materializes a fresh one is now explicitly
+unspecified and both conform — use the return value, and do not assume the argument was mutated.
+
+```Insert``` assigning the store-generated identifier back onto the entity, and ```Update```/```Delete``` returning 1,
+are now described as conventions an implementation is expected to honor rather than guarantees the library makes or
+verifies. ```0``` from an update or delete is correct for an identifier matching no row.
+
+```GetCount``` is documented as a required component of paging rather than a standalone feature — a pager cannot render
+without knowing the total it is paging over. If you want a count and do not need paging, declare your own count method
+on your own Dao interface; that is the supported answer, not a gap.
+
+```IBaseEntity```, ```IBaseIdEntity<T>```, ```IBaseSoftEntity``` and ```IBaseSoftIdEntity<T>``` had no documentation at
+all and now do. Two points on them are worth reading even if you have been using them for years. ```Get<T>``` does
+**not** key on ```IBaseIdEntity<T>``` — the identifier is resolved by name, ```{TypeName}Id``` first and ```Id``` as
+the fallback, so implementing the interface satisfies the fallback but an entity also exposing ```{TypeName}Id``` has
+that one used instead. And the library reads none of ```CreatedDate```, ```UpdatedDate``` or ```DeletedDate```; soft
+delete is entirely your implementation's behavior, and these interfaces only mark which entities take part in it.
+
 ### The method convention is now enforced strictly, and enforced before anything is written
 The remaining breaking changes all fail loudly on the first call, so they will find you rather than the other way
 around.
@@ -78,8 +174,15 @@ Its messages render types the way you wrote them, so a signature reads as ```(Co
 ```(Company, Int32, Int32)```, and a return type as ```IList<Company>``` rather than in namespace-qualified
 backtick-arity form.
 
-```ProphetsWay.BaseDataAccess.Tests``` was added — the first automated coverage this library has had, 68 tests
-pinning the convention, the dispatch behavior, and every fix listed above.
+```docs/feature-requests.md``` records the decisions this release deliberately did not make, and why — a published
+conformance kit for verifying an implementation against these contracts, nested transactions and savepoints, a general
+thread-safety contract, async members and ```IAsyncDisposable```, a standalone count capability that was considered and
+**rejected**, and splitting the transaction members onto their own interface. If something here looks like an
+oversight, check there first; the reasoning is written down so you can judge whether the tradeoff still holds and raise
+a feature request when it stops holding.
+
+```ProphetsWay.BaseDataAccess.Tests``` was added — the first automated coverage this library has had, 111 tests
+pinning the convention, the dispatch behavior, the disposal and transaction contracts, and every fix listed above.
 
 ### A note on visibility
 The convention has always required a public instance method. That has not changed in this release; it is now stated

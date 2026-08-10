@@ -259,6 +259,10 @@ The generic dispatcher removes repetitive type switches and probe construction f
 
 `IBaseSoftEntity` standardizes lifecycle timestamps. It does not automatically filter deleted rows or turn `Delete` into an update; each DAL implementation owns that behavior.
 
+### What was considered and left out
+
+Nested transactions, a general thread-safety contract, async members, and a standalone count capability were all weighed and deliberately not built. Each decision is recorded with its reasoning in [docs/feature-requests.md](docs/feature-requests.md), along with a proposal for a published conformance kit that would let a DAL implementation prove it honors the contract. Read that file before opening a feature request — it tells you what has already been weighed.
+
 ## Building & Testing Locally
 
 ```powershell
