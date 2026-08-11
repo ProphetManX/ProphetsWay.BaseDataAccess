@@ -104,6 +104,19 @@ namespace ProphetsWay.BaseDataAccess
 	/// </para>
 	/// <list type="bullet">
 	/// <item><description>
+	/// <b>Any base implementation of transaction handling. <see cref="BaseDataAccess"/> provides no template
+	/// method and tracks no transaction state; <see cref="TransactionStart"/>, <see cref="TransactionCommit"/>,
+	/// <see cref="TransactionRollBack"/> and <see cref="IDisposable.Dispose"/> are all abstract, and the whole of
+	/// transaction handling belongs to the implementation.</b> The obvious alternative was considered and
+	/// rejected: a base <c>Dispose</c> that notices an open transaction and calls a <c>protected virtual</c>
+	/// rollback hook the developer overrides. That would require <see cref="BaseDataAccess"/> to own transaction
+	/// state it deliberately does not have - it is a reflection dispatcher with no fields, and every member it
+	/// declares abstract is abstract for the same reason, because the state lives in the derived Data Access
+	/// Layer. The consequence is stated plainly so nobody reads it as a gap: the rules in <b>TRANSACTIONS</b>
+	/// above are obligations on an implementer, not behaviour this library performs. An implementation that
+	/// ignores them will compile and run.
+	/// </description></item>
+	/// <item><description>
 	/// <b>Nested transactions and savepoints.</b> Out of scope by decision. Transactions here are a scalpel for a
 	/// bounded batch of writes, not an ambient system, and richer semantics would be a future addition to this
 	/// interface rather than an implementation detail. An implementation must not improvise them.
