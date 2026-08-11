@@ -1,3 +1,4 @@
+using System;
 using Shouldly;
 using Xunit;
 
@@ -22,9 +23,11 @@ namespace ProphetsWay.BaseDataAccess.Tests
 	/// entity constructor already does — never as a <c>TargetInvocationException</c>.
 	/// </para>
 	/// <para>
-	/// An identifier of the wrong type is neither: it is the caller's mistake. What the reflection layer throws
-	/// for it is the CLR's choice, so only the parts this library owns are asserted, matching the ruling
-	/// already made for a null identifier written to a non-nullable property.
+	/// An identifier of the wrong type is neither: it is the caller's mistake. The reflection layer rejects it
+	/// with an <see cref="ArgumentException"/> and the library lets that stand rather than reinterpreting it,
+	/// which is the same ruling the library makes for itself when a null identifier is written to a non-nullable
+	/// value-type property — a case reflection would let through, so the library rejects it the same way before
+	/// reflection is reached.
 	/// </para>
 	/// <para>
 	/// Every call below supplies the type argument explicitly. Without it the compiler binds to the derived
@@ -87,13 +90,12 @@ namespace ProphetsWay.BaseDataAccess.Tests
 			var dal = new WellFormedDataAccess();
 
 			//act
-			var ex = Record.Exception(() => dal.Get<Company>("not-an-integer"));
+			var ex = Should.Throw<ArgumentException>(() => dal.Get<Company>("not-an-integer"));
 
 			//assert
-			//which framework exception a string written to an int property produces is the CLR's to decide, so
-			//only that it happens, that it is not a convention failure, and that no query ran are asserted
-			ex.ShouldNotBeNull();
-			(ex as DataAccessConventionException).ShouldBeNull();
+			//the two error contracts are unrelated by inheritance, so this holds onto the caller-error against
+			//wiring-error split rather than leaving it to the reader
+			ex.ShouldNotBeAssignableTo<DataAccessConventionException>();
 			dal.GetWasCalled.ShouldBeFalse();
 		}
 	}

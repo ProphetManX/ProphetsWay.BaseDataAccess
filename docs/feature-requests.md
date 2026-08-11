@@ -44,7 +44,7 @@ every Data Access Layer to have read the documentation and honoured it.
 transaction members `abstract` and holds no connection, context, or transaction state of its own. It has
 nothing to enforce the rules *with*. It can only require that an implementer decide.
 
-The 32 tests in `ConformingDataAccessDisposalTests` and `ConformingDataAccessTransactionTests` are worth
+The 35 tests in `ConformingDataAccessDisposalTests` and `ConformingDataAccessTransactionTests` are worth
 being precise about, because they are easy to over-read. Their subject is `ConformingDataAccess` — a
 hand-written implementation in the test project — not `BaseDataAccess`. They prove that a correct
 implementation is **expressible**, and they pin the contract's meaning so it cannot drift silently. They
@@ -77,7 +77,7 @@ Everything else — the assertions, the fixtures, the naming — comes from the 
 
 ### What it would cover
 
-The existing 32 tests are the natural first draft of its contents. They already correspond one-to-one with
+The existing 35 tests are the natural first draft of its contents. They already correspond one-to-one with
 the rules on the interface:
 
 | Area | Behaviour proved |
@@ -86,6 +86,7 @@ the rules on the interface:
 | Disposal | Every member throws `ObjectDisposedException` once disposed |
 | Disposal | A transaction still open at disposal is **rolled back**, never committed |
 | Disposal | Already-committed work survives disposal |
+| Disposal | No roll back is attempted when the instance is disposed with nothing open |
 | Disposal | A rollback that fails during disposal does not propagate, and the instance is still disposed |
 | Disposal | Use-after-dispose and transaction misuse are catchable by one `InvalidOperationException` handler |
 | Transactions | `TransactionStart` throws when a transaction is already open — transactions do not nest |
@@ -93,6 +94,7 @@ the rules on the interface:
 | Transactions | A failed commit leaves **no** transaction open, and a new one can be started afterwards |
 | Transactions | Writes inside a committed transaction persist; writes inside a rolled-back or failed one do not |
 | Transactions | A write with no transaction open auto-commits on its own |
+| Transactions | Transaction scope is the **instance** — a write through another instance is not enrolled, and closing one instance's transaction leaves another's open |
 | Convention | Required method names, parameter types, declared return types, and public instance visibility |
 | Convention | Identifier resolution — `{TypeName}Id` before `Id`, and the setter requirement |
 

@@ -66,7 +66,7 @@ compile as `ProphetsWay.BaseDataAccess.Conventions` referencing a contracts-only
 | --- | --- | --- |
 | Independently useful | **Fails** | It dispatches to `Get(T)`/`Insert(T)`/`Update(T)` — names defined only by this paradigm. Nobody installs it without the contracts. |
 | Low coupling | Passes | One-way dependency on `IBaseEntity` and `IBaseDataAccess`. |
-| Stable surface | Passes | Just hardened and pinned by 68 tests in v3.0.0. |
+| Stable surface | Passes | Just hardened and pinned by 115 tests in v3.0.0. |
 | Not already solved | Inconclusive | `UNVERIFIED — check nuget.org` for convention-dispatch libraries. |
 
 Failing criterion 1 is decisive. Splitting would produce two packages that are **always installed together**,
@@ -87,7 +87,8 @@ the point.
 
 - Entity marker and shape contracts (`IBaseEntity`, `IBaseIdEntity<T>`, `IBaseSoftEntity`, `IBaseSoftIdEntity<T>`).
 - Capability-composed DAO contracts (`IBaseDao<T>`, `IBaseGetAllDao<T>`, `IBasePagedDao<T>`).
-- The aggregate DAL contract, `IBaseDataAccess`.
+- The aggregate DAL contract, `IBaseDataAccess` — which as of v3.0.0 extends `IDisposable` and carries a
+  specified disposal contract and a specified transaction contract.
 - The optional reflection dispatcher and its convention, including `DataAccessConventionException`.
 - `BaseDataAccessHelper` staying `internal` — correctly not part of the public surface.
 
@@ -107,16 +108,20 @@ Ordered by value. None requires a package split.
 | # | Change | Rationale | Effort | Breaking? |
 | --- | --- | --- | --- | --- |
 | 1 | Split transaction members out of `IBaseDataAccess` into `IBaseTransactionalDataAccess` | See below — strongest finding | Medium | **Yes** — v4 |
-| 2 | Document that `IBaseIdEntity<T>` has no runtime role in identifier resolution | Closes drift 2; prevents a false assumption that implementing it changes dispatch | Low | No |
+| 2 | ~~Document that `IBaseIdEntity<T>` has no runtime role in identifier resolution~~ | **Done in v3.0.0.** Stated in the `<remarks>` on `IBaseIdEntity<T>` and in the README | — | No |
 | 3 | Rewrite the csproj `<Description>` to drop "any/all interactions" | Closes drift 1; the minimal vocabulary is the selling point | Low | No |
-| 4 | Decide explicitly whether async belongs in the vocabulary | A modern EF/Cosmos DAL is async-first; a sync-only contract forces `.Result` or a parallel hand-rolled surface. Decide and record the decision — adding it is a large change | Low (decision) | No (decision only) |
-| 5 | Add a test for an entity that implements `IBaseIdEntity<T>` *explicitly* | Explicit implementation makes the property private and named with its interface prefix, so `GetProperty("Id")` should miss it and raise a convention error. **Unverified by any current test** — worth pinning whichever way it behaves | Low | No |
-| 6 | Refresh the `AGENTS.md` "Known Deviations" table | Deviations 1–3 (no test project; `net461`-era TFM list; undotted monikers) are all **already fixed** on this branch, but still listed as outstanding | Low | No |
+| 4 | Decide explicitly whether async belongs in the vocabulary | A modern EF/Cosmos DAL is async-first; a sync-only contract forces `.Result` or a parallel hand-rolled surface. **The decision is now recorded** — deferred wholesale, and breaking when taken up; see entry 4 in [feature-requests.md](feature-requests.md). What remains is the timing | Low (decision) | No (decision only) |
+| 5 | Add a test for an entity that implements `IBaseIdEntity<T>` *explicitly* | Explicit implementation makes the property private and named with its interface prefix, so `GetProperty("Id")` should miss it and raise a convention error. **Still unverified by any current test** — worth pinning whichever way it behaves | Low | No |
+| 6 | ~~Refresh the `AGENTS.md` "Known Deviations" table~~ | **Done.** All three deviations shipped as fixed in v3.0.0 and the table now records an empty state | — | No |
 
 ### Refinement 1 in detail — the strongest finding
 
 `IBaseDataAccess` mandates `TransactionStart()`, `TransactionCommit()`, and `TransactionRollBack()` for **every**
 DAL, and `BaseDataAccess` declares all three `abstract`, so every derived class is forced to supply them.
+
+v3.0.0 **specified** what those three members mean — one transaction per instance, no nesting, rolled back on
+disposal — but it did not change *who* has to implement them. The finding below is therefore untouched by that
+work: a specified contract an implementation cannot honor is still a contract it has to lie about.
 
 The evidence that this is misplaced is in the reference implementation itself. `ProphetsWay.Example.DataAccess.NoDB`
 implements all three as:
@@ -150,6 +155,13 @@ public interface IBaseTransactionalDataAccess : IBaseDataAccess
 
 Business logic that needs a transaction depends on the narrower interface and gets a **compile-time** answer
 instead of a runtime `NotImplementedException`.
+
+**One thing the split now has to answer that it did not when this was first written.** v3.0.0 put `IDisposable`
+on `IBaseDataAccess`, and the disposal rules it carries reference transactions directly — *"a transaction still
+open at disposal is rolled back."* If the transaction members move to `IBaseTransactionalDataAccess`, whoever
+executes the split has to decide where disposal belongs and what the base interface's disposal rules say once
+transactions are no longer guaranteed to be present. That is a decision, not an obstacle, but it is one more
+thing the split must settle. Recorded as entry 6 in [feature-requests.md](feature-requests.md).
 
 This is binary-breaking — it removes members from a published interface and changes `BaseDataAccess`'s abstract
 surface — so it requires a major version bump and a CHANGELOG entry, and it must be coordinated with EFTools and

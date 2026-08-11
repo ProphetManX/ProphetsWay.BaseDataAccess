@@ -149,6 +149,11 @@ namespace ProphetsWay.BaseDataAccess
         /// <typeparamref name="T"/> exposes neither a <c>{TypeName}Id</c> nor an <c>Id</c> property, or the
         /// property it does expose has no set accessor at all.
         /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="id"/> is of a type the identifier property cannot hold, which includes <c>null</c>
+        /// when that property is a non-nullable value type. This is a caller error rather than a wiring error,
+        /// and is deliberately not a <see cref="DataAccessConventionException"/>.
+        /// </exception>
         public virtual T Get<T>(object id) where T : IBaseEntity, new()
         {
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);

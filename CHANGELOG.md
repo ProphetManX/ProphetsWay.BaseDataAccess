@@ -152,6 +152,31 @@ the identifier was assigned, so the mutation landed on a copy that was then disc
 received an entity with an unset key — no exception, just the wrong row or no row. Struct entities now receive the
 identifier they were asked for.
 
+```Get<T>(null)``` answered "not found" instead of rejecting the call. A wrong-typed identifier has always thrown
+```ArgumentException``` — that is a caller mistake rather than a wiring error, which is why it is deliberately not a
+```DataAccessConventionException``` — but ```null``` escaped the rule, because the reflection layer converts it to
+```default``` for a non-nullable value type instead of refusing it. An entity keyed on ```int``` therefore probed for
+identifier ```0``` and handed back whatever that found, in practice ```null```. Your bug came back as a plausible
+answer, with no exception and nothing in the build to catch it. ```Get<T>``` now throws ```ArgumentException```
+naming the property, its type and the entity type.
+
+The test is on the **identifier property's type**, not on ```null``` itself. A reference type such as ```string```,
+or a nullable value type such as ```int?```, can hold ```null```, and for those ```null``` still reaches your
+```Get``` unchanged. Only a non-nullable value type rejects it.
+
+```c#
+	//identifier property is int - used to return null, now throws ArgumentException
+	dal.Get<Company>(null);
+
+	//identifier property is string or int? - unchanged, null reaches your Get
+	dal.Get<Account>(null);
+```
+
+If you were passing ```null``` and relying on ```null``` coming back, that call now throws — behaviorally breaking,
+though it is a narrow usage and almost certainly an accidental one, since the old behavior was concealing the mistake
+rather than offering a feature. None of this had any test coverage before now — the suite asserted on
+```ArgumentException``` nowhere at all, which is how it survived — and closing it took the suite from 111 tests to 115.
+
 ```GetAll<T>``` and ```GetPaged<T>``` returned ```null``` when the derived method declared a return type that was not
 an ```IList<T>```, because the result was coerced with ```as```. A wrong return type is now reported as the wiring
 error it is.
@@ -181,7 +206,7 @@ thread-safety contract, async members and ```IAsyncDisposable```, a standalone c
 oversight, check there first; the reasoning is written down so you can judge whether the tradeoff still holds and raise
 a feature request when it stops holding.
 
-```ProphetsWay.BaseDataAccess.Tests``` was added — the first automated coverage this library has had, 111 tests
+```ProphetsWay.BaseDataAccess.Tests``` was added — the first automated coverage this library has had, 115 tests
 pinning the convention, the dispatch behavior, the disposal and transaction contracts, and every fix listed above.
 
 ### A note on visibility
