@@ -209,6 +209,21 @@ a feature request when it stops holding.
 ```ProphetsWay.BaseDataAccess.Tests``` was added — the first automated coverage this library has had, 115 tests
 pinning the convention, the dispatch behavior, the disposal and transaction contracts, and every fix listed above.
 
+### The XML documentation now ships with the package
+Everything above is written on the interfaces, and until now none of it reached you if you installed the package
+rather than read the repository. ```GenerateDocumentationFile``` had never been set here, so no XML documentation file
+was produced and nothing was packed into the nupkg — not even member summaries. The file is now emitted for all four
+target frameworks and the SDK packs it beside each assembly, so your IDE has something to read. ```IBaseIdEntity<T>.Id```
+picked up the summary it was missing on the way, which leaves the public surface documented in full, and the dispatched
+members on ```IBaseDataAccess``` now name ```DataAccessConventionException``` and the return type each requires instead
+of leaving you to find that elsewhere.
+
+One caveat, and it belongs to the tooling rather than the package. ```<summary>```, ```<param>```, ```<typeparam>```
+and ```<returns>``` surface reliably. ```<remarks>``` does not, and ```<remarks>``` is where the transaction, disposal,
+threading and convention contracts actually live — Rider's quick documentation and VS Code's hover show it, while
+Visual Studio's tooltip historically has not. If a tooltip stops short of the contract, it was not left out; the source
+and this changelog remain the complete account.
+
 ### A note on visibility
 The convention has always required a public instance method. That has not changed in this release; it is now stated
 in the documentation and covered by tests rather than left to be discovered.

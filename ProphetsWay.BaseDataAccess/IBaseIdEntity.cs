@@ -12,6 +12,9 @@
 	/// </remarks>
 	public interface IBaseIdEntity<T> : IBaseEntity
 	{
+		/// <summary>
+		/// The identifier value of the entity.
+		/// </summary>
 		T Id { get; set; }
 	}
 }
