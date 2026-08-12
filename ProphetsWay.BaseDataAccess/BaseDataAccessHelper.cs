@@ -112,12 +112,27 @@ namespace ProphetsWay.BaseDataAccess
         /// its original stack, rather than as a <see cref="TargetInvocationException"/> wrapper.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// An identifier of a type the property cannot hold is the caller's mistake rather than a wiring error,
         /// so the <see cref="ArgumentException"/> the reflection layer raises for it is left to surface on its
         /// own terms and is deliberately not reinterpreted as a <see cref="DataAccessConventionException"/>.
+        /// </para>
+        /// <para>
+        /// <c>null</c> is such an identifier whenever the property is a non-nullable value type, but the
+        /// reflection layer is lenient about that one case alone and writes <c>default</c> instead of throwing,
+        /// which would send a probe for identifier zero out as though the caller had asked for it. It is
+        /// rejected here so that case is reported the same way every other unusable identifier already is. The
+        /// test is against the property's type rather than the entity's, which is both the correct question to
+        /// ask and what extends the same protection to a value-type entity without a second branch.
+        /// </para>
         /// </remarks>
         private static void SetIdentifier(PropertyInfo property, object entity, object id)
         {
+            var propertyType = property.PropertyType;
+
+            if (id == null && propertyType.IsValueType && Nullable.GetUnderlyingType(propertyType) == null)
+                throw new ArgumentException($"A null identifier cannot be assigned to the identifier property '{property.Name}' of type [{DescribeType(propertyType)}] on the entity type [{DescribeType(entity.GetType())}], because that type cannot hold null.");
+
             try
             {
                 property.SetValue(entity, id, null);

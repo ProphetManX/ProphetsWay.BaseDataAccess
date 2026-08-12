@@ -1,12 +1,15 @@
+using System;
 using Shouldly;
 using Xunit;
 
 namespace ProphetsWay.BaseDataAccess.Tests
 {
 	/// <summary>
-	/// <see cref="BaseDataAccess"/> does not guard against <c>null</c>. A null argument is forwarded to the
-	/// derived Data Access Layer, which decides what to do with it, and any framework exception that results
-	/// surfaces on its own terms rather than as a <see cref="DataAccessConventionException"/>.
+	/// <see cref="BaseDataAccess"/> does not guard against <c>null</c> on <c>Insert</c>, <c>Update</c> or
+	/// <c>Delete</c>: the null item is forwarded to the derived Data Access Layer, which decides what to do with
+	/// it. <c>Get&lt;T&gt;(object id)</c> is the exception, because it must write the identifier onto a probe
+	/// entity before there is anything to forward, so a null identifier travels only as far as the resolved
+	/// identifier property can hold it.
 	/// </summary>
 	/// <remarks>
 	/// <para>
@@ -14,9 +17,20 @@ namespace ProphetsWay.BaseDataAccess.Tests
 	/// non-generic overload and the reflection path under test is never exercised.
 	/// </para>
 	/// <para>
-	/// Where the identifier property can legitimately hold <c>null</c> — a reference type or a nullable value
-	/// type — the whole path is asserted end to end. Where it cannot, the outcome is decided by the CLR's
-	/// reflection layer rather than by this library, so only the part this library owns is asserted.
+	/// Whether a null identifier can be held is a question about the property's type alone. A reference type
+	/// (<see cref="Ticket.TicketId"/>) and a nullable value type (<see cref="Coupon.Id"/>) can both hold one, so
+	/// the null reaches the derived <c>Get</c> and the whole path is asserted end to end. A non-nullable value
+	/// type (<see cref="Company.CompanyId"/>) cannot, and the library rejects that call itself, with an
+	/// <see cref="ArgumentException"/> raised before reflection is reached. It is not left to the reflection
+	/// layer, which is lenient about this one case and would write <c>default</c> instead of throwing, sending a
+	/// probe for identifier zero out as though the caller had asked for it.
+	/// </para>
+	/// <para>
+	/// The rejection is a caller error rather than a wiring error in the entity, so it is deliberately never a
+	/// <see cref="DataAccessConventionException"/>. Its full contract belongs to
+	/// <see cref="BaseDataAccessIdentifierRejectionTests"/>; it is stated again here so the three outcomes a null
+	/// identifier can have — rejected, passed through as a reference type, passed through as a nullable value
+	/// type — can be read as one story rather than two thirds of one.
 	/// </para>
 	/// </remarks>
 	public class BaseDataAccessNullArgumentTests
@@ -68,18 +82,18 @@ namespace ProphetsWay.BaseDataAccess.Tests
 		}
 
 		[Fact]
-		public void ShouldNotReportAConventionFailureWhenGetIsGivenANullIdForAValueTypeIdProperty()
+		public void ShouldNotForwardANullIdToTheDerivedGetWhenTheIdPropertyIsANonNullableValueType()
 		{
 			//setup
 			var dal = new WellFormedDataAccess();
 
 			//act
-			var ex = Record.Exception(() => dal.Get<Company>(null));
+			var ex = Should.Throw<ArgumentException>(() => dal.Get<Company>(null));
 
 			//assert
-			//writing null to a non-nullable value-type property is resolved by the CLR's reflection layer, so
-			//whether it throws at all is not this library's to promise; that it is never a convention failure is
-			(ex as DataAccessConventionException).ShouldBeNull();
+			//a caller error, never a wiring error, and settled before anything could be queried
+			ex.ShouldNotBeAssignableTo<DataAccessConventionException>();
+			dal.GetWasCalled.ShouldBeFalse();
 		}
 
 		[Fact]

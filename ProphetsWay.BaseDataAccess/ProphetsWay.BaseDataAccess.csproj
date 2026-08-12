@@ -2,6 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net48;net8.0;net9.0</TargetFrameworks>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>Prophet's Way</Company>
 		<Product>BaseDataAccess</Product>
@@ -19,9 +20,9 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<Description>
-A group of interfaces to define any/all interactions required for a Data Access Layer (DAL).  
+A storage-neutral contract vocabulary for a Data Access Layer (DAL): entity marker interfaces, DAO interfaces composed by capability (CRUD, retrieve-all, paging), and one aggregate DAL interface for business logic to depend on, so an entire DAL implementation can be replaced with minimal impact on its consumers. Transaction, disposal and threading rules are specified on the interfaces themselves rather than left to each implementation.
 
-This can be used with any implementation of a DAL that you like, and allows for proper decoupling of the DAL from your business logic.  The purpose is to allow a completely new DAL implementation to be constructed, and then replace the current one with minimal impact to the business logic layers of the system.
+Also included, and optional, is the abstract BaseDataAccess class: inherit it and it dispatches generic calls - Get, GetAll, GetPaged, GetCount, Insert, Update and Delete - onto the strongly typed methods of your own DAL by convention, using reflection. Implement IBaseDataAccess directly instead when reflection is not appropriate.
 
 Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more information.
 		</Description>
@@ -32,7 +33,7 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 
 		<Copyright />
 		<PackageProjectUrl />
-		<PackageTags>dal data-access data-access-layer repository abstraction interfaces decoupling</PackageTags>
+		<PackageTags>dal data-access data-access-layer dao repository abstraction interfaces decoupling</PackageTags>
 		<PackageReleaseNotes />
 		<NeutralLanguage />
 		<AssemblyVersion />

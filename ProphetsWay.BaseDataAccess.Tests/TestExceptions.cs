@@ -36,4 +36,17 @@ namespace ProphetsWay.BaseDataAccess.Tests
 		{
 		}
 	}
+
+	/// <summary>
+	/// Thrown by <see cref="ConformingDataAccess"/> when it has been told to fail a commit or a roll back.
+	/// Distinctive so that "the roll back genuinely failed" cannot be confused with an assertion failure or
+	/// with the <see cref="InvalidOperationException"/> the transaction members throw of their own accord.
+	/// </summary>
+	public class TransactionFailureException : Exception
+	{
+		public TransactionFailureException(string message)
+			: base(message)
+		{
+		}
+	}
 }

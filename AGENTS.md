@@ -259,7 +259,7 @@ every consumer. Treat its surface as close to frozen.
 | Project | Role |
 |---|---|
 | `ProphetsWay.BaseDataAccess/` | The library — contracts plus the reflection dispatcher |
-| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; 76 tests over `net48`/`net8.0`/`net9.0` |
+| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; 115 tests over `net48`/`net8.0`/`net9.0` |
 
 There is no example project in this repo — `ProphetsWay.Example` fills that role.
 
@@ -270,8 +270,8 @@ There is no example project in this repo — `ProphetsWay.Example` fills that ro
 | `IBaseEntity`, `IBaseIdEntity` | interfaces | Entity contracts |
 | `IBaseSoftEntity`, `IBaseSoftIdEntity` | interfaces | Soft-delete entity contracts |
 | `IBaseDao`, `IBaseGetAllDao`, `IBasePagedDao` | interfaces | DAO contracts by retrieval capability |
-| `IBaseDataAccess` | interface | The DAL root a consumer injects |
-| `BaseDataAccess` | public abstract class | The optional reflection dispatcher — largest file in the library |
+| `IBaseDataAccess` | interface | The DAL root a consumer injects. **Extends `IDisposable`** as of 3.0.0, and carries the specified disposal and transaction contracts in its `<remarks>` |
+| `BaseDataAccess` | public abstract class | The optional reflection dispatcher — largest file in the library. Declares `Dispose` and all three transaction members **abstract** |
 | `BaseDataAccessHelper` | internal static class | All reflection logic behind the dispatcher |
 | `DataAccessConventionException` | public exception | Thrown when a derived DAL violates the convention |
 
@@ -279,13 +279,39 @@ Namespace is `ProphetsWay.BaseDataAccess` throughout — correct for the Data Ac
 
 ### Behavioral Contracts Worth Knowing
 
+- **The interface-level `<remarks>` on `IBaseDataAccess` is the source of truth for disposal,
+  transactions, and threading.** It is organized into TRANSACTIONS / DISPOSAL / THREADING /
+  DELIBERATE OMISSIONS. Read it before documenting or changing any of them; do not restate its rules
+  from memory.
 - **The reflection convention is specified in full in the XML `<remarks>` on
   `DataAccessConventionException`** — method names and signatures, required visibility, required
   declared return types, and identifier resolution. Read it before touching `BaseDataAccess` or
   `BaseDataAccessHelper`; it is the source of truth, not this file.
+- **`IBaseDataAccess` extends `IDisposable` as of 3.0.0.** Every implementation supplies `Dispose`;
+  `BaseDataAccess` declares it `public abstract void Dispose();` so even a DAL holding nothing
+  disposable writes an explicit empty override. Any sample showing an implementation must include it.
+- **The disposal contract:** `Dispose` is idempotent and never throws; every member *other than*
+  `Dispose` throws `ObjectDisposedException` once disposed; a DAL disposes what it created and not
+  what was handed to it.
+- **The transaction contract:** one transaction per instance, no nesting,
+  `InvalidOperationException` on misuse, scope is the instance not the connection, a failed commit
+  leaves nothing open and discards its writes, calls outside a transaction auto-commit, ambient
+  `TransactionScope` is untouched, and an open transaction is **rolled back** on disposal.
+- **The `item` parameter on `GetAll`/`GetPaged`/`GetCount` is a type selector only** and is `null`
+  when the call arrives through the dispatcher. An implementation must never read it. Any prose
+  implying otherwise is wrong.
+- **`GetCount` is a required component of paging, not a standalone capability.** A consumer wanting
+  a bare count declares their own method on their own DAO interface.
+- **`IBaseDao<T>.Get` does not promise to return the instance passed in.** Use the return value.
+- **`Insert` assigning the identifier, and `Update`/`Delete` returning 1, are implementation
+  conventions**, not library guarantees.
 - **Exceptions from derived DAL methods propagate unwrapped.** No `TargetInvocationException`
   wrapper — a breaking change in 3.0.0.
 - **Value-type entities are supported by `Get<T>` but cannot represent "not found" as `null`.**
+- **`Get<T>(null)` throws `ArgumentException`** where the identifier property is a non-nullable value
+  type. Reference-type (`string`) and nullable-value-type (`int?`) identifiers still accept `null`.
+  `ArgumentException` is caller error; `DataAccessConventionException` is wiring error. The split is
+  deliberate.
 
 ### Known Deviations
 

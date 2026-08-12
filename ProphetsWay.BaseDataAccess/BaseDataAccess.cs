@@ -95,11 +95,21 @@ namespace ProphetsWay.BaseDataAccess
             return (int)mtd.InvokeUnwrapped(this, new object[] { null });
         }
 
+        /// <inheritdoc cref="IBaseDataAccess.TransactionCommit"/>
         public abstract void TransactionCommit();
 
+        /// <inheritdoc cref="IBaseDataAccess.TransactionRollBack"/>
         public abstract void TransactionRollBack();
 
+        /// <inheritdoc cref="IBaseDataAccess.TransactionStart"/>
         public abstract void TransactionStart();
+
+        /// <summary>
+        /// Releases the resources the derived Data Access Layer holds. Abstract because this class dispatches by
+        /// reflection and owns no connection, context or transaction state of its own; the binding disposal rules
+        /// are specified on <see cref="IBaseDataAccess"/>.
+        /// </summary>
+        public abstract void Dispose();
 
         /// <summary>
         /// Assumes that your ID property on your entities is either named "Id" or "EntityTypeNameId".  A probe
@@ -138,6 +148,11 @@ namespace ProphetsWay.BaseDataAccess
         /// No matching public instance <c>Get(T)</c> exists, it declares an incompatible return type,
         /// <typeparamref name="T"/> exposes neither a <c>{TypeName}Id</c> nor an <c>Id</c> property, or the
         /// property it does expose has no set accessor at all.
+        /// </exception>
+        /// <exception cref="ArgumentException">
+        /// <paramref name="id"/> is of a type the identifier property cannot hold, which includes <c>null</c>
+        /// when that property is a non-nullable value type. This is a caller error rather than a wiring error,
+        /// and is deliberately not a <see cref="DataAccessConventionException"/>.
         /// </exception>
         public virtual T Get<T>(object id) where T : IBaseEntity, new()
         {
