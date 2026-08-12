@@ -8,9 +8,9 @@ namespace ProphetsWay.BaseDataAccess
 	/// </summary>
 	/// <remarks>
 	/// <para>
-	/// This file is organised into four sections: <b>TRANSACTIONS</b>, <b>DISPOSAL</b>, <b>THREADING</b>, and
-	/// <b>DELIBERATE OMISSIONS</b>. Each section states its binding rules first and its reasoning after, so a
-	/// reader who only needs the rules can stop at the bullet lists.
+	/// This file is organised into five sections: <b>TRANSACTIONS</b>, <b>DISPOSAL</b>, <b>THREADING</b>,
+	/// <b>CONVENTION-BASED DISPATCH</b>, and <b>DELIBERATE OMISSIONS</b>. Each section states its binding rules
+	/// first and its reasoning after, so a reader who only needs the rules can stop at the bullet lists.
 	/// </para>
 	///
 	/// <para><b>═══ TRANSACTIONS ═══</b></para>
@@ -96,6 +96,29 @@ namespace ProphetsWay.BaseDataAccess
 	/// that single consequence, this library makes no thread-safety guarantee - see <b>DELIBERATE OMISSIONS</b>.
 	/// </para>
 	///
+	/// <para><b>═══ CONVENTION-BASED DISPATCH ═══</b></para>
+	/// <para>
+	/// An implementation deriving from <see cref="BaseDataAccess"/> - the optional reflection dispatcher this
+	/// library ships - does not implement <see cref="GetAll{T}"/>, <see cref="GetPaged{T}"/>,
+	/// <see cref="GetCount{T}"/>, <see cref="Get{TEntityType}"/>, <see cref="Insert{TEntityType}"/>,
+	/// <see cref="Update{TEntityType}"/> or <see cref="Delete{TEntityType}"/> directly. Each is resolved <b>by
+	/// convention</b> onto a method of the derived Data Access Layer, chosen from the member's name and the entity
+	/// type the call was made for, and a derived class that does not satisfy that convention is reported as
+	/// <see cref="DataAccessConventionException"/> - the method was never written, carries the wrong signature, was
+	/// declared with insufficient visibility, or declares a return type the member cannot use. The convention itself
+	/// - the required names and signatures, the requirement that the method be a public instance method, the
+	/// declared return type each member demands, and how the identifier property is resolved for
+	/// <see cref="Get{TEntityType}"/> - is specified in full on <see cref="DataAccessConventionException"/> and is
+	/// not restated here.
+	/// </para>
+	/// <para>
+	/// <b>That is behaviour of the dispatcher, not a term of this contract.</b> This interface knows nothing of
+	/// reflection or method resolution; an implementation written directly against it has no derived method to
+	/// resolve and can never raise <see cref="DataAccessConventionException"/>. Nothing in this section is an
+	/// obligation on such an implementation - it is recorded so a consumer who meets the exception knows what it
+	/// indicates and where it came from.
+	/// </para>
+	///
 	/// <para><b>═══ DELIBERATE OMISSIONS ═══</b></para>
 	/// <para>
 	/// Each of these was considered and left out on purpose. They are recorded with their reasoning so a future
@@ -151,6 +174,10 @@ namespace ProphetsWay.BaseDataAccess
 		/// untouched. An array satisfies <see cref="IList{T}"/> while remaining fixed size, so treat the result
 		/// as read-only unless the Data Access Layer says otherwise.
 		/// </returns>
+		/// <remarks>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>GetAll</c> with a return
+		/// type assignable to <see cref="IList{T}"/>.
+		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		IList<T> GetAll<T>() where T : IBaseEntity;
 
@@ -167,6 +194,10 @@ namespace ProphetsWay.BaseDataAccess
 		/// untouched. An array satisfies <see cref="IList{T}"/> while remaining fixed size, so treat the result
 		/// as read-only unless the Data Access Layer says otherwise.
 		/// </returns>
+		/// <remarks>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>GetPaged</c> with a return
+		/// type assignable to <see cref="IList{T}"/>.
+		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		IList<T> GetPaged<T>(int skip, int take) where T : IBaseEntity;
 
@@ -177,11 +208,17 @@ namespace ProphetsWay.BaseDataAccess
 		/// <typeparam name="T">The entity type to count.</typeparam>
 		/// <returns>The number of entities of that type, or zero when there are none.</returns>
 		/// <remarks>
+		/// <para>
 		/// This exists as the companion to <see cref="GetPaged{T}"/> rather than as a feature in its own right:
 		/// a paged view cannot show how many pages exist, or where the last one ends, without the total it is
 		/// paging over. Exposing counting as a standalone capability was considered and rejected on that basis -
 		/// a count wanted for some other purpose belongs on the consumer's own Dao interface as a custom method,
 		/// where it can carry the filters that made it worth asking for.
+		/// </para>
+		/// <para>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>GetCount</c> with a return
+		/// type of <see cref="int"/>.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		int GetCount<T>() where T : IBaseEntity;
@@ -275,6 +312,12 @@ namespace ProphetsWay.BaseDataAccess
 		/// an entity type that exposes neither property, or exposes one with no set accessor.
 		/// </para>
 		/// <para>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> further rejects an <paramref name="id"/>
+		/// the resolved property cannot hold — <c>null</c> among them where that property is a non-nullable value
+		/// type — with an <see cref="ArgumentException"/>, which is <b>caller error</b> rather than the wiring
+		/// error <see cref="DataAccessConventionException"/> reports.
+		/// </para>
+		/// <para>
 		/// <b>Value-type entities cannot report "not found" as <c>null</c>.</b> The constraint on
 		/// <typeparamref name="TEntityType"/> is satisfied by a <c>struct</c> as readily as by a <c>class</c>, and
 		/// for a value-type entity <c>null</c> is simply not representable in the return type — an implementation
@@ -299,9 +342,15 @@ namespace ProphetsWay.BaseDataAccess
 		/// <typeparam name="TEntityType">The entity type to insert.</typeparam>
 		/// <param name="item">The entity to insert.</param>
 		/// <remarks>
+		/// <para>
 		/// Implementations are expected to assign the store-generated identifier back onto <paramref name="item"/>
 		/// once the insert completes. That is a convention left to the implementation - nothing here performs it
 		/// or verifies that it happened.
+		/// </para>
+		/// <para>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> may declare its <c>Insert</c> with any return
+		/// type, including <c>void</c>; whatever it returns is discarded.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		void Insert<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
@@ -315,6 +364,11 @@ namespace ProphetsWay.BaseDataAccess
 		/// <typeparam name="TEntityType">The entity type to update.</typeparam>
 		/// <param name="item">The entity to update, identified by the identifier it already carries.</param>
 		/// <returns>The count of records the Data Access Layer reports as affected.</returns>
+		/// <remarks>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>Update</c> with a return
+		/// type of <see cref="int"/>, checked before the method is invoked so a mis-declared one cannot write and only
+		/// then report the defect.
+		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		int Update<TEntityType>(TEntityType item) where TEntityType: IBaseEntity, new();
 
@@ -328,6 +382,11 @@ namespace ProphetsWay.BaseDataAccess
 		/// <typeparam name="TEntityType">The entity type to delete.</typeparam>
 		/// <param name="item">The entity to delete, identified by the identifier it already carries.</param>
 		/// <returns>The count of records the Data Access Layer reports as affected.</returns>
+		/// <remarks>
+		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>Delete</c> with a return
+		/// type of <see cref="int"/>, checked before the method is invoked so a mis-declared one cannot write and only
+		/// then report the defect.
+		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		int Delete<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();
 	}
