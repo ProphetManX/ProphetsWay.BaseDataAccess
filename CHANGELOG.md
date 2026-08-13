@@ -1,3 +1,38 @@
+# v3.1.0
+### Nobody is stranded — read this first
+This release retargets the library to ```netstandard2.0;net10.0```, dropping the dedicated ```net48```, ```net8.0```
+and ```net9.0``` assets. That sounds like a package you can no longer install, and it is not. ```netstandard2.0``` is
+still here, and it is consumable by .NET Framework 4.6.1 and later and by every .NET Core and .NET 5+ runtime. If you
+are on .NET Framework 4.8, .NET 8 or .NET 9 you still install this package, you still resolve an asset, and it still
+works. There is nothing you have to do.
+
+### What does change is which assembly you bind
+If you previously resolved the ```net48```, ```net8.0``` or ```net9.0``` asset, you now resolve ```netstandard2.0```.
+That is behaviorally equivalent, and this is not a hopeful claim — it was checked. The library contains no conditional
+compilation whatsoever, not a single ```#if``` in any of its eleven source files, and no package references at all.
+```netstandard2.0``` and ```net48``` both compile at C# 7.3. The assets you were resolving before and the asset you
+resolve now were the same compilation of the same code; only the folder name in the package differs.
+
+### Why now
+.NET 8 and .NET 9 both reach end of life on 10 November 2026, and .NET 10 is the current Long Term Support release.
+From here the library tracks Long Term Support releases only. The odd-numbered Standard Term Support releases carry an
+eighteen-month window, which is not long enough to be worth a permanent asset in a package whose whole surface is
+interfaces and one reflection dispatcher.
+
+### The test project still targets ```net48```, deliberately
+A release that drops ```net48``` from the library and keeps it in the tests looks like something that was missed. It
+was not. ```Activator.CreateInstance<T>()``` wraps an exception thrown by a constructor on .NET Framework and does not
+on .NET Core, which is the reason ```BaseDataAccessHelper``` handles ```TargetInvocationException``` at all — see the
+v3.0.0 notes on unwrapped exceptions for why that path matters to you. The ```net48``` test leg is the only thing that
+exercises it. Now that the library no longer ships a ```net48``` asset, that leg binds ```netstandard2.0```, which
+means it validates the exact assembly a .NET Framework consumer actually receives rather than a sibling build of it.
+
+### Verification
+All 115 tests pass on both ```net48``` and ```net10.0```, 230 executions in total, and the build produces zero
+warnings, unchanged from v3.0.0. The packed package contains exactly ```lib/netstandard2.0/``` and ```lib/net10.0/```.
+No source file, public member, signature or package reference changed in this release.
+
+
 # v3.0.0
 ### Exceptions from your DAL now reach you unwrapped — read this before upgrading
 This is the one change in this release that breaks quietly. Every one of the generic calls on ```BaseDataAccess```
