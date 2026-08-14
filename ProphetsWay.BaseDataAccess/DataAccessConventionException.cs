@@ -56,7 +56,7 @@ namespace ProphetsWay.BaseDataAccess
     /// assigned the supplied <c>id</c> before the derived <c>Get(T)</c> method is invoked. The property is resolved
     /// by name: first <c>{TypeName}Id</c> — for an entity type named <c>Company</c> that is <c>CompanyId</c> —
     /// falling back to <c>Id</c>. Resolution is by name only; no attribute, base type, or interface member is
-    /// consulted, and the property's type is not considered when matching. Two distinct failures are reported
+    /// consulted, and the property's type is not considered when matching. Three distinct failures are reported
     /// through this exception:
     /// <list type="bullet">
     /// <item><description>
@@ -68,6 +68,15 @@ namespace ProphetsWay.BaseDataAccess
     /// with no <c>set</c> or <c>init</c> at all, as an expression-bodied member, or as a <c>readonly</c> computed
     /// value — so the identifier cannot be written to it.
     /// </description></item>
+    /// <item><description>
+    /// <b>The property exists and is writable, but is not public.</b> The lookup is restricted to public instance
+    /// properties, so a <c>private</c>, <c>protected</c> or <c>internal</c> declaration is invisible to it and
+    /// fails exactly as if it had not been written. The way this is reached in practice is an <b>explicit
+    /// interface implementation</b> — <c>int IBaseIdEntity&lt;int&gt;.Id { get; set; }</c> — which is both
+    /// non-public and reflected under its interface-qualified name, so neither the <c>{TypeName}Id</c> nor the
+    /// <c>Id</c> lookup matches it. Implementing <see cref="IBaseIdEntity{T}"/> is therefore not by itself
+    /// sufficient; the identifier must be declared as an ordinary public member.
+    /// </description></item>
     /// </list>
     /// Only the complete absence of a set accessor is a failure. <b>A set accessor that exists but is not public is
     /// fully supported</b>: a <c>private set</c>, <c>protected set</c>, <c>internal set</c> or <c>init</c> accessor
@@ -75,7 +84,8 @@ namespace ProphetsWay.BaseDataAccess
     /// setter from ordinary callers in this way works correctly and does not produce this exception. That
     /// distinction is deliberate — the convention requires the identifier to be <i>assignable</i>, not to be
     /// <i>publicly</i> assignable — and it is the opposite of the visibility rule that governs circumstance 1,
-    /// where a non-public method is invisible to the lookup.
+    /// where a non-public method is invisible to the lookup. It applies to the <i>accessor</i> only: the property
+    /// declaration itself must be public to be found at all, exactly as a derived method must be.
     /// </para>
     /// <para>
     /// The check on the identifier property is made before the probe entity is constructed, so like the return type

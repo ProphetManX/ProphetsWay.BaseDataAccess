@@ -9,7 +9,7 @@
 		<RootNamespace>ProphetsWay.BaseDataAccess</RootNamespace>
 		<AssemblyName>ProphetsWay.BaseDataAccess</AssemblyName>
 		<PackageId>ProphetsWay.BaseDataAccess</PackageId>
-		<RepositoryType>GitHub</RepositoryType>
+		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.BaseDataAccess</RepositoryUrl>
 		<ApplicationIcon />
 		<Win32Resource />
@@ -31,8 +31,8 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 		
 		<Version />
 
-		<Copyright />
-		<PackageProjectUrl />
+		<Copyright>Copyright © Prophet's Way</Copyright>
+		<PackageProjectUrl>https://github.com/ProphetManX/ProphetsWay.BaseDataAccess</PackageProjectUrl>
 		<PackageTags>dal data-access data-access-layer dao repository abstraction interfaces decoupling</PackageTags>
 		<PackageReleaseNotes />
 		<NeutralLanguage />

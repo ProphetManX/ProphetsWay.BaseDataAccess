@@ -46,6 +46,27 @@ namespace ProphetsWay.BaseDataAccess.Tests
 	}
 
 	/// <summary>
+	/// Entity that satisfies <see cref="IBaseIdEntity{T}"/> through an <b>explicit</b> interface implementation,
+	/// so its identifier is reachable only through the interface and never through the entity type itself.
+	/// </summary>
+	/// <remarks>
+	/// <para>
+	/// C# compiles an explicit implementation to a private property whose reflected name is the fully qualified,
+	/// interface-prefixed form rather than <c>Id</c>. Identifier resolution is by name against the public surface,
+	/// so neither <c>WraithId</c> nor <c>Id</c> matches and the entity is indistinguishable from <see cref="Ghost"/>
+	/// as far as the dispatcher is concerned - despite the compiler having verified it carries an identifier.
+	/// </para>
+	/// <para>
+	/// This is the pairing that makes the entity worth having: <see cref="Ghost"/> genuinely has no identifier,
+	/// while this one does and still cannot be used with <c>Get&lt;T&gt;(object)</c>.
+	/// </para>
+	/// </remarks>
+	public class Wraith : IBaseIdEntity<int>
+	{
+		int IBaseIdEntity<int>.Id { get; set; }
+	}
+
+	/// <summary>
 	/// Entity with an accessible parameterless constructor that always throws.
 	/// </summary>
 	public class Detonator : IBaseEntity

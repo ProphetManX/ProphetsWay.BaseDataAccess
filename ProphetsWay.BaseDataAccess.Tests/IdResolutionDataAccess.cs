@@ -10,6 +10,7 @@ namespace ProphetsWay.BaseDataAccess.Tests
 		public Widget ReceivedWidget;
 		public Gadget ReceivedGadget;
 		public Ghost ReceivedGhost;
+		public Wraith ReceivedWraith;
 
 		public Company Get(Company probe)
 		{
@@ -32,6 +33,13 @@ namespace ProphetsWay.BaseDataAccess.Tests
 		public Ghost Get(Ghost probe)
 		{
 			ReceivedGhost = probe;
+			return probe;
+		}
+
+		//present so the method lookup succeeds and the failure under test can only be identifier resolution
+		public Wraith Get(Wraith probe)
+		{
+			ReceivedWraith = probe;
 			return probe;
 		}
 	}

@@ -27,10 +27,47 @@ v3.0.0 notes on unwrapped exceptions for why that path matters to you. The ```ne
 exercises it. Now that the library no longer ships a ```net48``` asset, that leg binds ```netstandard2.0```, which
 means it validates the exact assembly a .NET Framework consumer actually receives rather than a sibling build of it.
 
+### An entity can implement ```IBaseIdEntity<T>``` and still be rejected — the documentation now says so
+The documentation on ```IBaseIdEntity<T>``` claimed that implementing the interface "satisfies the fallback" for
+identifier resolution. That is true of an ordinary implementation and false of an **explicit** one. C# compiles an
+explicit implementation to a non-public property whose reflected name is the interface-qualified form, so neither the
+```{TypeName}Id``` lookup nor the ```Id``` fallback finds it, and ```Get<T>``` throws
+```DataAccessConventionException``` before dispatching — on an entity the compiler has verified carries an identifier.
+
+```c#
+	//compiles, and Get<Widget>(5) throws DataAccessConventionException
+	public class Widget : IBaseIdEntity<int>
+	{
+		int IBaseIdEntity<int>.Id { get; set; }
+	}
+
+	//declare the identifier as an ordinary public member
+	public class Widget : IBaseIdEntity<int>
+	{
+		public int Id { get; set; }
+	}
+```
+
+The same documentation was emphatic that a non-public *setter* is fully supported — a ```private set``` or ```init```
+accessor is written by reflection exactly as a public one is — while saying nothing about the property declaration
+itself needing to be public. Read together those two facts implied more leniency than exists, and in the one case that
+matters they read backwards. The rule is now stated on ```IBaseIdEntity<T>```, ```DataAccessConventionException```,
+```IBaseDataAccess.Get``` and ```BaseDataAccess.Get```: the accessor may be hidden, the declaration may not.
+
+**No behavior changed.** This is how identifier resolution has always worked; what changed is that the shipped
+documentation now describes it. The XML documentation is packed inside the package, so the corrected text appears in
+IntelliSense as soon as you upgrade, and a characterization test was added to pin the behavior so the description
+cannot quietly drift away from it again.
+
+### Packaging metadata
+```<PackageProjectUrl>``` and ```<Copyright>``` were empty stubs and now carry values, so the nuget.org listing links
+back to the repository and states its copyright. Nothing about the assembly changed.
+
 ### Verification
-All 115 tests pass on both ```net48``` and ```net10.0```, 230 executions in total, and the build produces zero
+All 116 tests pass on both ```net48``` and ```net10.0```, 232 executions in total, and the build produces zero
 warnings, unchanged from v3.0.0. The packed package contains exactly ```lib/netstandard2.0/``` and ```lib/net10.0/```.
-No source file, public member, signature or package reference changed in this release.
+No public member, signature or package reference changed in this release, and the only edits to source are XML
+documentation comments.
 
 
 # v3.0.0
