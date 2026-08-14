@@ -56,22 +56,52 @@ The rule is **family-dependent**. Do not "correct" one family to match the other
 
 ## Target Frameworks
 
-Standard set for new and modernized libraries:
-
 ```xml
-<TargetFrameworks>netstandard2.0;net48;net8.0;net9.0</TargetFrameworks>
+<!-- default for a published library -->
+<TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+
+<!-- only when a framework-conditional dependency or API requires it -->
+<TargetFrameworks>netstandard2.0;net48;net10.0</TargetFrameworks>
+
+<!-- test projects — netstandard2.0 is not a valid test target -->
+<TargetFrameworks>net48;net10.0</TargetFrameworks>
 ```
 
-- `netstandard2.0` — maximum reach for older consumers
-- `net48` — final .NET Framework release, for legacy consumers
-- `net8.0` / `net9.0` — current LTS and current
+.NET ships every November: **even-numbered = LTS (3 years), odd-numbered = STS (18 months)**.
+.NET 10 is the current LTS (Nov 2025 → ~Nov 2028). **.NET 8 and .NET 9 both go end of life on
+10 November 2026** — `net8.0`/`net9.0` are now debt, as are `netcoreapp*`, `net5.0`–`net7.0`,
+and anything below `net48`.
 
-Do not add a TFM without a consumer who needs it. Every extra target multiplies build time and
-holds the whole library back to the oldest target's language features. TFMs below `net48`,
-plus `netcoreapp*`, `net5.0`, `net6.0`, and `net7.0`, are end-of-life — treat them as debt.
-
-Write monikers in canonical dotted form (`net8.0`, not `net80`). The undotted form parses, but
-it is non-standard and inconsistent across the repos.
+1. **LTS only.** Never target an STS release in a published library — an 18-month window means
+   re-cutting the list every year and stranding someone each time. Never target a preview.
+2. **`netstandard2.0` is permanent.** It is an API contract, not a runtime, so it cannot expire.
+   It is the reach floor: consumable by .NET Framework 4.6.1+ (painless from 4.7.2 up) and by every
+   .NET Core/5+ runtime. It is also the last .NET Standard version Framework supports —
+   `netstandard2.1` deliberately excluded it.
+3. **`net48` is conditional, not default.** `netstandard2.0` already reaches .NET Framework 4.8, so
+   an explicit `net48` target earns its place only when the repo has a framework-conditional
+   *dependency* or needs an API `netstandard2.0` does not expose. `ProphetsWay.EFTools` qualifies —
+   its EF6 branch is keyed on `net4*`. Most repos do not. Justify it per repo.
+   (.NET Framework 4.8 is the final Framework version; it ships as a Windows component and inherits
+   the OS lifecycle, so it has no standalone EOL date.)
+4. **Carry exactly one modern TFM** unless something concrete requires two. Every extra target
+   multiplies build time.
+5. **Test projects name runtimes directly**, since `netstandard2.0` cannot be a test target. A
+   `net48` test target is how .NET Framework behavior is *verified*, which is distinct from a
+   library merely *supporting* it: `Activator.CreateInstance<T>()` wraps a throwing constructor on
+   .NET Framework and does not on .NET Core, so `ProphetsWay.Example.Tests` must keep `net48` or its
+   exception-passthrough regression guard stops guarding anything.
+6. **Canonical dotted monikers** — `net10.0`, never `net100`. The undotted form parses, but it is
+   non-standard and inconsistent across the repos.
+7. **`LangVersion`:** `netstandard2.0` defaults to C# 7.3, and that constraint applies to all shared
+   code in a multi-targeted project. This is why nullable reference types do not work in these
+   libraries regardless of what a csproj claims.
+8. **Dropping `net8.0`/`net9.0` is not a breaking change** while `netstandard2.0` remains — those
+   consumers still install and still resolve an asset.
+9. **Adding a TFM is a MINOR bump, never a patch.** A new target silently repoints existing
+   consumers to a *different assembly* — a .NET 10 consumer that resolved the `netstandard2.0` asset
+   starts binding the `net10.0` one, a different compilation with different BCL bindings and no
+   netstandard shims. A patch must be safe to take without reading the notes.
 
 ## Packaging Metadata
 
@@ -84,7 +114,7 @@ are optional — but they become mandatory the moment publishing is on the table
 <Authors>G. Gordon Nasseri</Authors>
 <Company>Prophet's Way</Company>
 <Description>...</Description>
-<RepositoryType>GitHub</RepositoryType>
+<RepositoryType>git</RepositoryType>
 <RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.Thing</RepositoryUrl>
 <PackageLicenseExpression>MIT</PackageLicenseExpression>
 <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
@@ -149,10 +179,14 @@ ProphetsWay.Thing/
 ├─ ProphetsWay.Thing/        ← library
 ├─ ProphetsWay.Thing.Tests/  ← xUnit
 └─ docs/                     ← agent-generated analysis
+  ├─ repo-profile.md
+  ├─ purpose-and-scope.md
+  ├─ nuget-extraction-proposal.md
+  └─ feature-requests.md    ← durable request and decision index
 ```
 
-`docs/` holds `repo-profile.md`, `purpose-and-scope.md`, and `nuget-extraction-proposal.md`.
-These are generated by agents and committed.
+These artifacts are generated by agents and committed. `feature-requests.md` becomes applicable once
+the first request is captured; an empty repo need not carry a placeholder.
 
 ## Solution Layout
 
@@ -215,6 +249,7 @@ the project header and sidecars are what change.
   | `Implementer` | Implementation `.cs` only — **never** a test file |
   | `Refactorer` | Implementation `.cs` only, behavior-preserving — **never** a test file |
   | `Modernizer` | `.csproj` / `.sqlproj` build and packaging config — never versions, never namespaces |
+  | `Pipeline Engineer` | `.yml` / `.yaml` only — never versions, secrets, project files, or Markdown |
   | `Changelog Author` | `CHANGELOG.md` only |
   | `Threat Modeler`, `Security Reviewer` | `docs/security/` only — read-only on source |
 
@@ -223,6 +258,10 @@ the project header and sidecars are what change.
 - **Never bump a version** in `app-variables.yml`. That is a human decision.
 - **Never invent an Azure DevOps `definitionId`.** Badge URLs must be copied from a file that
   already exists in the repo. If one is missing, ask.
+- **Feature requests are shared-capture, single-owner triage.** The owner or any agent may append a
+  `Proposed` entry to `docs/feature-requests.md`, but must read the index first and extend an existing
+  entry instead of duplicating it. Only `Purpose Refiner` may change status. Never delete or renumber
+  entries; rejected requests remain with their reasoning, and new numbers increase monotonically.
 - **A namespace change is a binary-breaking change.** Never make one casually; it requires a major
   version bump and a CHANGELOG entry.
 - Respect the family split above. `ProphetsWay.EFTools` living outside `ProphetsWay.Utilities`
@@ -258,10 +297,17 @@ every consumer. Treat its surface as close to frozen.
 
 | Project | Role |
 |---|---|
-| `ProphetsWay.BaseDataAccess/` | The library — contracts plus the reflection dispatcher |
-| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; 115 tests over `net48`/`net8.0`/`net9.0` |
+| `ProphetsWay.BaseDataAccess/` | The library — contracts plus the reflection dispatcher. Targets `netstandard2.0;net10.0` |
+| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; 116 tests over `net48`/`net10.0`, 232 executions |
 
 There is no example project in this repo — `ProphetsWay.Example` fills that role.
+
+**The library/test TFM split is deliberate.** The library ships no `net48` asset as of 3.1.0, but the test
+project keeps a `net48` leg because that is how .NET Framework *behavior* is verified —
+`Activator.CreateInstance<T>()` wraps a throwing constructor there and does not on .NET Core, which is the
+only reason `CreateEntity<T>()` in `BaseDataAccessHelper` has a catch block. That leg now binds the
+`netstandard2.0` asset, i.e. the exact assembly a .NET Framework consumer receives. Do not report the
+mismatch as drift.
 
 ### Key Types
 
@@ -312,12 +358,22 @@ Namespace is `ProphetsWay.BaseDataAccess` throughout — correct for the Data Ac
   type. Reference-type (`string`) and nullable-value-type (`int?`) identifiers still accept `null`.
   `ArgumentException` is caller error; `DataAccessConventionException` is wiring error. The split is
   deliberate.
+- **The identifier property must be *public*; implementing `IBaseIdEntity<T>` explicitly is not
+  sufficient.** An explicit implementation compiles to a non-public, interface-qualified property, so
+  neither the `{TypeName}Id` nor the `Id` lookup finds it and `Get<T>` throws
+  `DataAccessConventionException` before dispatching. This is now stated in the `<remarks>` on
+  `IBaseIdEntity<T>`, `DataAccessConventionException`, `IBaseDataAccess.Get` and `BaseDataAccess.Get`,
+  and pinned by a characterization test — it is documented, not an open gap.
 
 ### Known Deviations
 
-**None.** The test project, the TFM list (`netstandard2.0;net48;net8.0;net9.0`), and the canonical
-dotted monikers all landed in 3.0.0, closing every previously listed deviation. Do not re-add
-filler entries here — an empty state is a real state.
+**None.** The test project and the canonical dotted monikers landed in 3.0.0, and 3.1.0 retargeted the
+library to `netstandard2.0;net10.0` — the current house standard. Every previously listed deviation is
+closed. Do not re-add filler entries here — an empty state is a real state.
+
+One cosmetic non-deviation, recorded so it is not rediscovered: indentation in the library is mixed —
+four files use tabs, seven use four spaces. Both csproj files and the whole test project use tabs, there
+is no `.editorconfig`, and none of it is visible in the package. See `docs/repo-profile.md`.
 
 Packaging metadata is **complete and correct** — use this repo's `.csproj` as the reference when
 fixing others.

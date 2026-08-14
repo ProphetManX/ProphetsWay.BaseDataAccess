@@ -309,7 +309,8 @@ namespace ProphetsWay.BaseDataAccess
 		/// for an entity type named <c>Company</c> that is <c>CompanyId</c> — falling back to <c>Id</c>. The
 		/// property's type is never considered. <see cref="DataAccessConventionException"/> specifies that
 		/// resolution in full, along with how an implementation deriving from <see cref="BaseDataAccess"/> reports
-		/// an entity type that exposes neither property, or exposes one with no set accessor.
+		/// an entity type that exposes neither property, exposes one that is not public — an <b>explicit</b>
+		/// implementation of <see cref="IBaseIdEntity{T}"/> among them — or exposes one with no set accessor.
 		/// </para>
 		/// <para>
 		/// An implementation deriving from <see cref="BaseDataAccess"/> further rejects an <paramref name="id"/>

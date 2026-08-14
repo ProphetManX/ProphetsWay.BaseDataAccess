@@ -18,20 +18,61 @@ are the source of truth. This file links to them and does not duplicate them, be
 
 | # | Item | Status |
 | --- | --- | --- |
-| 1 | [A published conformance kit](#1--a-published-conformance-kit) | **Proposed** — wants design work |
+| 1 | [A published conformance kit](#1--a-published-conformance-kit) | **Deferred** — revisit after EFTools, possibly after BPA |
 | 2 | [Nested transactions and savepoints](#2--nested-transactions-and-savepoints) | Deferred — out of scope by decision |
 | 3 | [A general thread-safety contract](#3--a-general-thread-safety-contract) | Deferred — deliberately unspecified |
 | 4 | [Async members and `IAsyncDisposable`](#4--async-members-and-iasyncdisposable) | Deferred — breaking when taken up |
 | 5 | [A standalone count capability](#5--a-standalone-count-capability) | **Rejected** — not deferred |
-| 6 | [Splitting transactions into `IBaseTransactionalDataAccess`](#6--splitting-transactions-into-ibasetransactionaldataaccess) | Scheduled for a possible v4 |
-| 7 | [Making a swallowed rollback failure observable](#7--making-a-swallowed-rollback-failure-observable) | Open question |
+| 6 | [Splitting transactions into `IBaseAccessWithTransactions`](#6--splitting-transactions-into-ibaseaccesswithtransactions) | Scheduled for a possible v4 |
+| 7 | [Making a swallowed rollback failure observable](#7--making-a-swallowed-rollback-failure-observable) | **Rejected** — not deferred |
+| 8 | [Source Link and symbol packages](#8--source-link-and-symbol-packages) | Deferred — declined for now |
+| 9 | [A diagnosable `DataAccessConventionException` message for explicit interface implementation](#9--a-diagnosable-dataaccessconventionexception-message-for-explicit-interface-implementation) | **Proposed** — v3.2.0 at the earliest |
+
+Numbers are permanent. Entries are never renumbered and never removed — [purpose-and-scope.md](purpose-and-scope.md)
+cites entries by number, and a rejected entry is decision history rather than dead weight.
+
+## Release Eligibility — v3.1.0
+
+v3.1.0 is a **minor** release: a target-framework retarget plus documentation. No public member, signature or
+implementation changed in it, so **nothing binary-breaking can land in it.** That rules out most of this file
+by construction.
+
+| # | Status | Eligible for v3.1.0? | Why |
+| --- | --- | --- | --- |
+| 1 | Deferred | **No** | Not started, and if built it ships as a *sibling package* with its own version line — it could not ride this release even if it were finished |
+| 2 | Deferred | **No** | Out of scope by decision; nothing to land |
+| 3 | Deferred | Technically yes — **but no** | Specifying threading adds no member, so it would be documentation-only and non-breaking. It is deferred on cost, not on eligibility, and no work exists to ship |
+| 4 | Deferred | **No** | Adding members to a published interface breaks every implementation. v4 at the earliest |
+| 5 | Rejected | n/a | Decided against |
+| 6 | Scheduled for a possible v4 | **No** | Removes members from a published interface and changes `BaseDataAccess`'s abstract surface. Binary-breaking by definition |
+| 7 | Rejected | n/a | Decided against |
+| 8 | Deferred | Technically yes — **but no** | Source Link and a `.snupkg` are packaging-only and non-breaking, so a minor release is the right home for them. Declined by the owner for now; see the entry |
+| 9 | Proposed | **No** | Changing an exception's message is a **behaviour change**, and v3.1.0 changed no behaviour by construction. It also requires a test-assertion change to land first. v3.2.0 at the earliest |
+
+**The honest answer is none.** The two non-breaking candidates — 3 and 8 — are both deferred by decision rather
+than by version constraint, entry 9 arrived after the release was already scoped as documentation-only, and
+everything else is either breaking or already closed.
 
 ---
 
 ## 1 — A published conformance kit
 
-**Status:** Proposed. The problem is settled; the shape of the answer is not. This is the entry that wants
-input.
+**Status:** **Deferred — explicitly not rejected.** The problem is settled and the value is accepted; the shape of
+the answer is not settled, and the owner is not ready to spend time on it while the library is deliberately this
+open-ended and flexible.
+
+**Revisit trigger — the useful part of this decision.** Reopen this **after `ProphetsWay.EFTools` has been built
+and updated onto 3.x**, or possibly after `ProphetsWay.BPA`. The reasoning is that a second and a third *real*
+implementation are what will teach us what "conforming" actually means. Designing a conformance kit against one
+hand-written in-repo implementation and one in-memory reference DAL is designing against a sample of two, and the
+open questions below are exactly the ones a real database-backed implementation answers for free.
+
+**One constraint is already settled and survives the deferral:** if this is ever built it ships as a **sibling
+package** — working name `ProphetsWay.BaseDataAccess.Conformance` — and **never inside the contracts package.**
+The contracts package's strongest property is that it carries zero package references, which is what makes it safe
+for a consumer's contracts project to depend on. A test base class drags in a test framework, and putting that in
+the dependency graph of every consumer is the exact coupling this library exists to prevent. Recorded in full as
+the entry-1 note in [purpose-and-scope.md](purpose-and-scope.md).
 
 ### The problem
 
@@ -120,9 +161,12 @@ answer these before writing code.
    test framework in its own right.** Getting this wrong in either direction is the main way this idea fails:
    too little and it is unusable against a real database, too much and it is a second framework to learn.
 
-3. **Which target frameworks must it reach?** The library targets `netstandard2.0;net48;net8.0;net9.0`.
-   `netstandard2.0` is not a runnable test target, so the kit plausibly needs a narrower list — but the list
-   has to cover every framework an implementer might actually run their suite on.
+3. **Which target frameworks must it reach?** As of v3.1.0 the library targets `netstandard2.0;net10.0` and the
+   test project targets `net48;net10.0`. `netstandard2.0` is not a runnable test target, so the kit has to name
+   runtimes directly — and the retarget makes that question *wider*, not narrower. A `netstandard2.0`-only
+   library is installable on .NET Framework 4.6.1+ and on every .NET Core and .NET 5+ runtime, so the set of
+   frameworks an implementer might run their suite on is now larger than the set the library itself names. The
+   kit's target list has to be chosen against the reach floor, not against the library's asset list.
 
 4. **One kit, or one per capability?** The DAO interfaces compose by capability on purpose:
    `IBaseGetAllDao<T>` and `IBasePagedDao<T>` are siblings, and an entity declares only what it supports. A
@@ -133,9 +177,14 @@ answer these before writing code.
 5. **`ProphetsWay.EFTools` and `ProphetsWay.Example` are the first two consumers and the natural proving
    ground.** They are also the honest test of whether the idea works: EFTools is database-backed and
    Example's `NoDB` implementation is in-memory, so between them they exercise exactly the tension in
-   question 2. If the kit cannot serve both cleanly, it is not ready to publish. Note also that Example's
-   `NoDB` implementation currently throws `NotImplementedException` from its transaction members — see
-   entry 6 — so what "conforming" means for a non-transactional store has to be settled alongside this.
+   question 2. If the kit cannot serve both cleanly, it is not ready to publish. **Correction to what this
+   entry used to say:** `NoDB` no longer throws `NotImplementedException` from its transaction members. At the
+   tip of `ProphetsWay.Example` it implements all three for real, against a `TransactionLog` undo log that
+   replays writes in reverse on rollback. The `NotImplementedException` version survives only in the older
+   commit that `ProphetsWay.EFTools` pins its submodule to. That **raises** the bar rather than lowering it:
+   both reference implementations are now fully transactional, so the kit can assume transactional behaviour
+   from the two implementations it can actually test against — which is precisely why the revisit trigger above
+   waits for implementations that are not these two.
 
 ### Why it fits this library in particular
 
@@ -193,8 +242,11 @@ interface breaks every existing implementation. That cost is known and accepted 
 seriously later rather than half-heartedly now — it is not an oversight, and it should not be reported as
 one.
 
-The `netstandard2.0` target makes `IAsyncDisposable` awkward today, which is a practical reason to wait but
-not the reason for the decision. The reason is the half-feature problem.
+The `netstandard2.0` target makes `IAsyncDisposable` awkward, which is a practical reason to wait but not the
+reason for the decision. The reason is the half-feature problem. **The awkwardness does not expire**, and it is
+worth being clear about that: `netstandard2.0` is an API contract rather than a runtime, so it is permanent by
+design, and after the v3.1.0 retarget it is the only thing carrying this package to .NET Framework at all. Async
+will be taken up *with* that floor in place, not after it lifts.
 
 Related: refinement 4 in [purpose-and-scope.md](purpose-and-scope.md) records the same question from the
 scope side — that a modern async-first Data Access Layer must currently choose between `.Result` and a
@@ -222,29 +274,109 @@ filters that made it worth asking for. The reasoning is stated on `GetCount<T>` 
 
 ---
 
-## 6 — Splitting transactions into `IBaseTransactionalDataAccess`
+## 6 — Splitting transactions into `IBaseAccessWithTransactions`
 
-**Status:** Scheduled for a possible v4. **Already recorded in full** as refinement 1 in
-[purpose-and-scope.md](purpose-and-scope.md) — read it there. It is the strongest finding in that document,
-with the evidence, the proposed shape, and the coordination cost across EFTools and both copies of Example.
+**Status:** Scheduled for a possible v4. **Binary-breaking**, and it has to be coordinated with
+`ProphetsWay.EFTools` and `ProphetsWay.Example`.
 
-Not restated here. One thing has changed since it was written, and this entry exists to record it:
+This entry has been rewritten. The *shape* of the change is accepted; the argument that originally motivated it
+is not, and the evidence that argument rested on has expired. Both are recorded below, because the difference
+between them decides how the split gets designed.
 
-**Disposal now sits on the base interface while the transaction members might later move out.**
-`IBaseDataAccess` extends `IDisposable` and carries documented disposal semantics — including *"a transaction
-still open at disposal is rolled back"*, a rule that mentions transactions from the base interface. If the
-transaction members move to a narrower `IBaseTransactionalDataAccess`, whoever executes that split has to
-decide where disposal belongs and what the base interface's disposal rules say once transactions are no
-longer guaranteed to be there.
+### The motivation that was NOT accepted
 
-That is a decision, not an obstacle, but it is one more thing the split has to answer — and it did not exist
+The split was first argued as *non-transactional stores are forced to lie* — a store with no native notion of a
+transaction has to either throw from three mandated members or synthesize a capability nobody asked it for.
+**The owner does not find that compelling:** he cannot think of a real database implementation that would not
+want transactions in some capacity. Do not re-run that argument; it has been heard and set aside.
+
+The evidence behind it has expired independently, and this is a correction to what this entry and
+[purpose-and-scope.md](purpose-and-scope.md) used to claim. `ProphetsWay.Example.DataAccess.NoDB` **no longer
+throws `NotImplementedException`** from its transaction members. At the tip of `ProphetsWay.Example` it
+implements all three for real, against a `TransactionLog` undo log. The `NotImplementedException` version
+survives only in the older commit `ProphetsWay.EFTools` pins its submodule to. The vivid proof is gone.
+
+### The motivation that IS accepted — the shape
+
+The real win is not about dishonest implementations. It is about what `BaseDataAccess` forces on every derived
+DAL today: **three `override`s, written whether or not the implementer has anything to say.** `BaseDataAccess`
+declares `TransactionStart()`, `TransactionCommit()` and `TransactionRollBack()` `abstract`, so there is no
+inherited implementation to fall back on and no way to decline.
+
+The proposed shape — the working name is the owner's:
+
+- A separate interface, **`IBaseAccessWithTransactions`**, carrying the three transaction members.
+- **`BaseDataAccess` does not implement that interface**, and therefore **does not declare the three members
+  abstract.** This is the load-bearing part. A DAL that inherits the dispatcher stops inheriting an obligation.
+- A consumer's DAL that wants transactions implements them as **interface members**, not as overrides of
+  inherited abstract members.
+
+> **Illustrative** — not a proposed API surface, and nothing below exists in the repo.
+
+```csharp
+public interface IBaseAccessWithTransactions
+{
+	void TransactionStart();
+	void TransactionCommit();
+	void TransactionRollBack();
+}
+
+public class MyDataAccess : BaseDataAccess, IBaseAccessWithTransactions
+{
+	//no 'override' keyword anywhere in here
+	public void TransactionStart() { /* ... */ }
+}
+```
+
+The secondary benefit is the one the original framing buried: business logic that needs a transaction depends on
+the narrower interface and gets a **compile-time** answer, instead of discovering at runtime whether the DAL it
+was handed can honour one.
+
+### The open question the split must answer
+
+**Disposal now sits on the base interface while the transaction members would move out.** `IBaseDataAccess`
+extends `IDisposable` as of v3.0.0 and carries documented disposal semantics — including *"a transaction still
+open at disposal is rolled back"*, a rule that mentions transactions from the base interface. Whoever executes
+the split has to decide where disposal belongs and what the base interface's disposal rules say once
+transactions are no longer guaranteed to be present.
+
+That is a decision, not an obstacle, but it is one more thing the split has to settle — and it did not exist
 when the split was first proposed.
+
+### Coordination cost
+
+This removes members from a published interface and changes `BaseDataAccess`'s abstract surface, so it needs a
+major version bump and a CHANGELOG entry. **A correction to how that cost used to be stated here:** this entry
+referred to *"both copies of Example"*, and there are not two copies. `ProphetsWay.EFTools` consumes
+`ProphetsWay.Example` as a **git submodule** — `.gitmodules` declares `path = ProphetsWay.Example`,
+`branch = main`. The two cannot drift; the submodule is merely *pinned*, currently to a pre-3.0.0 commit. So
+there is **one** source of Example to change and a pinned pointer to advance. The real consequence is a
+coordination requirement, not a duplication problem — and EFTools has not picked up 3.x at all yet, which is the
+larger part of the work either way.
+
+Related: refinement 1 in [purpose-and-scope.md](purpose-and-scope.md) records the same split from the scope side
+and rates it the strongest finding in that document.
 
 ---
 
 ## 7 — Making a swallowed rollback failure observable
 
-**Status:** Open question. A real hole in verifiability, with a real cost to closing it.
+**Status:** **Rejected.** Not deferred — this one was decided against, and reopening it needs a new argument
+rather than new timing.
+
+The owner's reasoning, in his words:
+
+> we can't make implementor devs add more things to their project just in case there are errors, that's for them
+> to build around.
+
+That is the decision. A diagnostics sink on `IBaseDataAccess` would be an obligation placed on every implementer
+to serve a failure mode most of them will never hit, and reporting on their own failures is the implementer's
+job and their existing infrastructure's job, not this library's.
+
+The analysis that produced the proposal is preserved below, because the verifiability hole it identified is real
+and a future proposal should start from it rather than rediscover it.
+
+### The hole, which is still real
 
 The contract says `Dispose` never throws, and that a rollback failing during disposal is swallowed — an
 implementation *may* log it, but must not propagate it. The reasoning is sound: throwing from `Dispose` masks
@@ -253,13 +385,127 @@ any in-flight exception inside a `using` block, turning a diagnosable failure in
 The consequence is that **"attempted the rollback and swallowed the failure" and "never attempted the
 rollback at all" are indistinguishable to a caller.** Both look like a silent `Dispose`. The rule is
 therefore stated but **not verifiable from outside the implementation** — which also means a conformance kit
-(entry 1) cannot check it, since a kit only sees what a caller sees.
+(entry 1) cannot check it, since a kit only sees what a caller sees. **That remains true and is now simply
+accepted.** If entry 1 is ever revisited, this rule is one it cannot cover, and it should say so rather than
+attempt it.
 
-One way to close it: require implementations to report a swallowed failure to a sink supplied by the
-consumer — a callback, a diagnostic listener, something along those lines. That makes the behaviour
-observable without reintroducing a throwing `Dispose`, and would make the rule checkable.
+### What was proposed and rejected
 
-The cost is a **new API surface** on an interface whose whole appeal is being small, plus a decision about
-whether the sink is required or optional, and what an implementation does when none is supplied. That
-tradeoff has not been made. It is recorded here because the verifiability hole is real and should be
-weighed alongside entry 1 rather than discovered during it.
+Requiring implementations to report a swallowed failure to a sink supplied by the consumer — a callback, a
+diagnostic listener, something along those lines. It would have made the behaviour observable without
+reintroducing a throwing `Dispose`, at the cost of a **new API surface** on an interface whose whole appeal is
+being small, plus a decision about whether the sink is required or optional and what an implementation does when
+none is supplied.
+
+**This also settles a scope question.** [purpose-and-scope.md](purpose-and-scope.md) flagged this entry as *in
+scope, but widens it* — a sink describes how an implementation reports on itself, which is an observability
+concern rather than a data-reaching one, and taking it up would have required rewriting the library's
+one-sentence purpose to admit it. That widening is now **moot**. The purpose sentence stands unchanged.
+
+---
+
+## 8 — Source Link and symbol packages
+
+**Status:** Deferred. Declined for now, with a technical question to check before it is next argued.
+
+`Repo Analyst` recommended enabling Source Link and publishing a `.snupkg` alongside the package. The argument
+is a good one and specific to this library: the XML `<remarks>` on `IBaseDataAccess` and
+`DataAccessConventionException` **are the product**, so a consumer staring at a `DataAccessConventionException`
+ought to be able to step into `BaseDataAccessHelper` and watch the convention resolution that produced it,
+rather than reading about it and guessing.
+
+**The owner declined for now**, on two grounds: he does not want to add a project dependency at this time, and
+the library is small enough — eleven files, no conditional compilation — to be easy to reason about without
+stepping through it.
+
+### Open technical question — **UNVERIFIED, check before relying on it**
+
+The "adds a dependency" objection may be smaller than it appears, and this should be confirmed rather than
+assumed by whoever picks this up:
+
+- A `PackageReference` to Source Link carried with `PrivateAssets="all"` is a build-time asset and **does not**
+  flow to consumers as a package dependency.
+- The .NET SDK from version 8 onward is understood to include Source Link **built in**, which would mean no
+  `PackageReference` at all — plausibly just `<PublishRepositoryUrl>` and `<EmbedUntrackedSources>` in the
+  csproj, plus `-p:ContinuousIntegrationBuild=true` and a `.snupkg` push step in the pipeline.
+
+**None of that is asserted as fact here.** It is the thing to verify first, because if it holds then the
+package's zero-package-reference property survives intact and the decision is being made against a cost that
+is not actually there. If it does not hold, the decline stands on its own terms.
+
+Note that any change here touches `prophets-pipelines` as well as the csproj — the `.snupkg` has to be produced
+and pushed by the shared templates, which makes this a multi-repo change rather than a one-file one. Packaging
+changes of this kind are non-breaking and belong in a minor release.
+
+---
+
+## 9 — A diagnosable `DataAccessConventionException` message for explicit interface implementation
+
+**Status:** **Proposed.** The behaviour is correct; the *message* is the finding. **v3.2.0 at the earliest** —
+see the sequencing constraint below, which is mandatory and not obvious.
+
+### How it was found
+
+A characterization test written this session pinned previously untested behaviour: what happens when an entity
+implements [`IBaseIdEntity<T>`](../ProphetsWay.BaseDataAccess/IBaseIdEntity.cs) **explicitly** rather than
+implicitly.
+
+```csharp
+public class Wraith : IBaseIdEntity<int>
+{
+	int IBaseIdEntity<int>.Id { get; set; }
+}
+```
+
+`BaseDataAccessHelper` resolves the identifier with
+`entityType.GetProperty($"{Name}Id") ?? entityType.GetProperty("Id")`. `Type.GetProperty(string)` binds
+`Public | Instance | Static`, and an explicit implementation is non-public *and* reflected under its
+interface-qualified name — so **both lookups miss.** The observed behaviour is a clean
+`DataAccessConventionException` thrown before dispatch. The suite is green at 232 tests.
+
+### The problem
+
+The exception **type** is right and throwing before dispatch is right. The **message** is wrong for this case,
+and wrong in the way most likely to cost a developer an hour:
+
+> The entity type [Wraith] exposes neither a 'WraithId' nor an 'Id' property, so no identifier can be assigned
+> to it.
+
+The developer is looking at a source file that visibly declares `Id`, on a type the compiler accepted as
+`IBaseIdEntity<int>`. The message tells them the property does not exist. Nothing in it mentions visibility,
+explicit interface implementation, or the interface. The natural next thought — *"but it's right there"* — leads
+nowhere.
+
+The proposal is to have the message name the **reason** rather than only the absence: detect that a non-public
+or interface-qualified candidate exists and say so, pointing the developer at visibility rather than at
+existence.
+
+### Scope — the documentation half is already done
+
+**The remaining gap is runtime diagnostics only.** v3.1.0 already states, on
+[`IBaseIdEntity`](../ProphetsWay.BaseDataAccess/IBaseIdEntity.cs),
+[`DataAccessConventionException`](../ProphetsWay.BaseDataAccess/DataAccessConventionException.cs),
+`BaseDataAccess.Get<T>` and `IBaseDataAccess.Get<TEntityType>`, that the identifier property must be **public**
+and that an explicit implementation is not sufficient. Do not re-do that work; this entry is about what the
+program says at the moment of failure, not about what the documentation says beforehand.
+
+### Constraints on doing it
+
+- **This is a behaviour change, not a documentation change**, so it cannot land in v3.1.0. v3.2.0 at the
+  earliest.
+- **The sequencing is mandatory.** A test now asserts the current message text with three `ShouldContain` calls
+  in `BaseDataAccessIdResolutionTests`. `Test Designer` updates those assertions **first**; `Implementer`
+  changes the message **second**. An implementer who changes the message first faces a failing test it is
+  forbidden to edit.
+- Message text is **not** part of the binary contract, but anyone matching on it in their own tests would be
+  affected. A minor compatibility consideration, not a blocker.
+
+### Open question — do not decide it here
+
+How the improved message is produced. Both options are recorded because neither is obviously right:
+
+1. **A second reflection pass.** Re-query with `BindingFlags.NonPublic` to detect a hidden candidate and tailor
+   the message to it. Gives a precise diagnosis, and costs a reflection call only on the path that is already
+   failing.
+2. **Enumerate the failure modes in the existing static text.** Trivial, and cannot regress anything — at the
+   cost of handing the developer a list to work through rather than an answer.

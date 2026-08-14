@@ -70,5 +70,32 @@ namespace ProphetsWay.BaseDataAccess.Tests
 			ex.Message.ShouldContain("'Id'");
 			dal.ReceivedGhost.ShouldBeNull();
 		}
+
+		/// <summary>
+		/// Pins what an <b>explicitly</b> implemented <see cref="IBaseIdEntity{T}"/> identifier does. The entity
+		/// carries an identifier the compiler has verified, yet resolution is by name against the public surface
+		/// and an explicit implementation is private under an interface-prefixed name, so nothing matches.
+		/// </summary>
+		/// <remarks>
+		/// The message is asserted to name the two properties it looked for rather than merely to be of the right
+		/// type, because the whole risk of this case is that the reported defect - "no identifier property" - and
+		/// the actual defect - "the identifier is not public under either name" - read as contradicting each other
+		/// to a developer looking at an entity that plainly declares one.
+		/// </remarks>
+		[Fact]
+		public void ShouldThrowConventionExceptionWhenTheEntityImplementsItsIdentifierExplicitly()
+		{
+			//setup
+			var dal = new IdResolutionDataAccess();
+
+			//act
+			var ex = Should.Throw<DataAccessConventionException>(() => dal.Get<Wraith>(5));
+
+			//assert
+			ex.Message.ShouldContain(nameof(Wraith));
+			ex.Message.ShouldContain("'WraithId'");
+			ex.Message.ShouldContain("'Id'");
+			dal.ReceivedWraith.ShouldBeNull();
+		}
 	}
 }

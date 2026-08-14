@@ -35,7 +35,11 @@ With the NuGet Package Manager Console:
 Install-Package ProphetsWay.BaseDataAccess
 ```
 
-Targets: .NET Standard 2.0, .NET Framework 4.8, .NET 8.0, and .NET 9.0.
+Targets: .NET Standard 2.0 and .NET 10.0.
+
+As of 3.1.0 the package ships those two assets only — the dedicated `net48`, `net8.0`, and `net9.0` assets are gone, and **that strands nobody**. `netstandard2.0` is consumable by .NET Framework 4.6.1 and later and by every .NET Core and .NET 5+ runtime, so a .NET Framework, .NET 8, or .NET 9 project still installs this package and still resolves an asset.
+
+The test project targets `net48;net10.0`, deliberately. A `net48` test leg is how .NET Framework *behavior* is verified, which is a different thing from the library merely *supporting* Framework through `netstandard2.0`.
 
 ## Quick Start
 
@@ -189,7 +193,7 @@ If you register `IBaseDataAccess` in a dependency-injection container, the conta
 | Type | Member | Purpose |
 | --- | --- | --- |
 | `IBaseEntity` | Marker interface | Identifies an entity that can participate in the DAL contracts. |
-| `IBaseIdEntity<T>` | `T Id { get; set; }` | Adds a strongly typed `Id` property. It describes shape only — `Get<T>` does **not** key on it, resolving the identifier by name instead, so implementing it satisfies the `Id` fallback but changes no dispatch behavior. |
+| `IBaseIdEntity<T>` | `T Id { get; set; }` | Adds a strongly typed `Id` property. It describes shape only — `Get<T>` does **not** key on it, resolving the identifier by name instead. Implementing it *implicitly* satisfies the `Id` fallback while changing no dispatch behavior; implementing it **explicitly** satisfies neither lookup. |
 | `IBaseSoftEntity` | `CreatedDate`, `UpdatedDate`, `DeletedDate` | Carries timestamps for creation, updates, and soft deletion. It does not itself implement delete behavior. |
 | `IBaseSoftIdEntity<T>` | Combined contract | Combines `IBaseSoftEntity` and `IBaseIdEntity<T>`. |
 
@@ -235,7 +239,19 @@ If your concrete DAL inherits `BaseDataAccess`, each generic call requires an ex
 | `Update<T>(item)` | `Update(T)` | `int` |
 | `Delete<T>(item)` | `Delete(T)` | `int` |
 
-For `Get<T>(id)`, the dispatcher creates `T` and sets `{TypeName}Id` first, falling back to `Id`. The property must have a setter, though that setter **need not be public** — a `private set`, `protected set`, `internal set`, or `init` is resolved and invoked exactly as a public one is. Only the complete absence of a set accessor is a failure. Other operations do not require either property.
+For `Get<T>(id)`, the dispatcher creates `T` and sets `{TypeName}Id` first, falling back to `Id`. The property must have a setter, though that setter **need not be public** — a `private set`, `protected set`, `internal set`, or `init` is resolved and invoked exactly as a public one is. Only the complete absence of a set accessor is a failure — and that leniency extends to the *accessor* alone, not to the property declaration, which must still be public to be found at all, as the next paragraph explains. Other operations do not require either property.
+
+**The property declaration itself is a different matter, and this is where the convention bites.** Resolution runs through `Type.GetProperty(string)`, which searches public properties (instance and static) only. So implementing `IBaseIdEntity<T>` *explicitly* does not satisfy it — an explicit implementation is non-public and is reflected under its interface-qualified name, so the `{TypeName}Id` lookup and the `Id` fallback both miss and `Get<T>` throws `DataAccessConventionException` before dispatching:
+
+```csharp
+//this compiles, the compiler has verified the identifier, and the dispatcher still cannot find it
+public class Widget : IBaseIdEntity<int>
+{
+    int IBaseIdEntity<int>.Id { get; set; }
+}
+```
+
+Declare the identifier as an ordinary public property. The two rules read as contradicting each other only until you separate them: a non-public *setter* is fine because the value merely has to be assignable, while the *property* has to be publicly visible because that is the only surface the lookup searches. The full specification lives in the XML `<remarks>` on `DataAccessConventionException`.
 
 An identifier the property cannot hold raises `ArgumentException`, not `DataAccessConventionException` — that split is deliberate, separating caller error from wiring error. **`Get<T>(null)` throws when the identifier property is a non-nullable value type**, because that property cannot hold `null`. A reference-type identifier such as `string`, or a nullable value type such as `int?`, accepts `null` normally.
 
@@ -509,7 +525,7 @@ dotnet build
 dotnet test
 ```
 
-The `ProphetsWay.BaseDataAccess.Tests` project contains 115 xUnit tests. They cover generic dispatch, method lookup, return types, identifier resolution and assignment, identifier rejection, null arguments and null results, struct entities, shadowed methods, and exception propagation — plus 35 tests over `ConformingDataAccess`, a hand-written implementation of `IBaseDataAccess` that pins the disposal and transaction contracts. Those 35 prove a correct implementation is expressible and fix the contract's meaning; they say nothing about any *other* implementation, which is the gap [docs/feature-requests.md](docs/feature-requests.md) proposes a conformance kit to close.
+The `ProphetsWay.BaseDataAccess.Tests` project contains 116 xUnit tests, run against both `net48` and `net10.0`. They cover generic dispatch, method lookup, return types, identifier resolution and assignment, identifier rejection, null arguments and null results, struct entities, shadowed methods, and exception propagation — plus 35 tests over `ConformingDataAccess`, a hand-written implementation of `IBaseDataAccess` that pins the disposal and transaction contracts. Those 35 prove a correct implementation is expressible and fix the contract's meaning; they say nothing about any *other* implementation, which is the gap [docs/feature-requests.md](docs/feature-requests.md) proposes a conformance kit to close.
 
 The companion [ProphetsWay.Example](https://github.com/ProphetManX/ProphetsWay.Example) repository demonstrates the same contracts with a NoDB implementation; the EFTools repository supplies an Entity Framework implementation.
 
@@ -527,7 +543,7 @@ Created by [G. Gordon Nasseri](https://github.com/ProphetManX). See the reposito
 
 ## Changelog
 
-See [CHANGELOG.md](CHANGELOG.md). Version 3.0.0 makes `IBaseDataAccess` extend `IDisposable` and specifies the disposal and transaction contracts in full; it also introduced strict convention validation, unwrapped implementation exceptions, consolidated target frameworks, and the in-repo test suite. **Read the 3.0.0 entry before upgrading** — the unwrapped exceptions and the new `Dispose` obligation both break existing code.
+See [CHANGELOG.md](CHANGELOG.md). Version 3.1.0 retargets the library to `netstandard2.0;net10.0`; no source file, public member, or signature changed, and no consumer loses support. Version 3.0.0 makes `IBaseDataAccess` extend `IDisposable` and specifies the disposal and transaction contracts in full; it also introduced strict convention validation, unwrapped implementation exceptions, consolidated target frameworks, and the in-repo test suite. **Read the 3.0.0 entry before upgrading** — the unwrapped exceptions and the new `Dispose` obligation both break existing code.
 
 ## License
 

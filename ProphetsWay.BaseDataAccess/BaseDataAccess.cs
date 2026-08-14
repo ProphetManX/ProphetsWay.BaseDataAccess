@@ -141,13 +141,16 @@ namespace ProphetsWay.BaseDataAccess
         /// by reflection exactly as a public one is, and an entity hiding its identifier setter that way works
         /// correctly rather than failing. That is the opposite of the visibility rule governing the method
         /// lookup, where a non-public <c>Get(T)</c> is invisible and fails as though it had never been written.
-        /// Only the complete absence of a set accessor is a failure.
+        /// Only the complete absence of a set accessor is a failure. That leniency applies to the <i>accessor</i>
+        /// only: the property declaration itself must be public to be found at all, so an <b>explicit</b>
+        /// implementation of <see cref="IBaseIdEntity{T}"/> — non-public and reflected under its
+        /// interface-qualified name — is matched by neither lookup and fails as though it had not been written.
         /// </para>
         /// </remarks>
         /// <exception cref="DataAccessConventionException">
         /// No matching public instance <c>Get(T)</c> exists, it declares an incompatible return type,
-        /// <typeparamref name="T"/> exposes neither a <c>{TypeName}Id</c> nor an <c>Id</c> property, or the
-        /// property it does expose has no set accessor at all.
+        /// <typeparamref name="T"/> exposes neither a <c>{TypeName}Id</c> nor an <c>Id</c> property, exposes one
+        /// that is not public, or exposes one with no set accessor at all.
         /// </exception>
         /// <exception cref="ArgumentException">
         /// <paramref name="id"/> is of a type the identifier property cannot hold, which includes <c>null</c>
