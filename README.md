@@ -241,7 +241,7 @@ If your concrete DAL inherits `BaseDataAccess`, each generic call requires an ex
 
 For `Get<T>(id)`, the dispatcher creates `T` and sets `{TypeName}Id` first, falling back to `Id`. The property must have a setter, though that setter **need not be public** — a `private set`, `protected set`, `internal set`, or `init` is resolved and invoked exactly as a public one is. Only the complete absence of a set accessor is a failure — and that leniency extends to the *accessor* alone, not to the property declaration, which must still be public to be found at all, as the next paragraph explains. Other operations do not require either property.
 
-**The property declaration itself is a different matter, and this is where the convention bites.** Resolution runs through `Type.GetProperty(string)`, which binds public instance properties only. So implementing `IBaseIdEntity<T>` *explicitly* does not satisfy it — an explicit implementation is non-public and is reflected under its interface-qualified name, so the `{TypeName}Id` lookup and the `Id` fallback both miss and `Get<T>` throws `DataAccessConventionException` before dispatching:
+**The property declaration itself is a different matter, and this is where the convention bites.** Resolution runs through `Type.GetProperty(string)`, which searches public properties (instance and static) only. So implementing `IBaseIdEntity<T>` *explicitly* does not satisfy it — an explicit implementation is non-public and is reflected under its interface-qualified name, so the `{TypeName}Id` lookup and the `Id` fallback both miss and `Get<T>` throws `DataAccessConventionException` before dispatching:
 
 ```csharp
 //this compiles, the compiler has verified the identifier, and the dispatcher still cannot find it
