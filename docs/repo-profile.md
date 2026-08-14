@@ -176,7 +176,7 @@ markup to anyone tidying the file.
 | `Authors` | **present** | `G. Gordon Nasseri` |
 | `Company` | **present** | `Prophet's Way` — display form, correct |
 | `Description` | **present** | Multi-paragraph; covers both the vocabulary and the optional dispatcher |
-| `RepositoryType` | **present** | `GitHub` |
+| `RepositoryType` | **present** | `git` |
 | `RepositoryUrl` | **present** | `https://github.com/ProphetManX/ProphetsWay.BaseDataAccess` |
 | `PackageLicenseExpression` | **present** | `MIT`, matching [LICENSE](../LICENSE) |
 | `PackageRequireLicenseAcceptance` | **present** | `true` |
