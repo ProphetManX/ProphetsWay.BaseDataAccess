@@ -69,8 +69,8 @@ namespace ProphetsWay.BaseDataAccess
     /// value — so the identifier cannot be written to it.
     /// </description></item>
     /// <item><description>
-    /// <b>The property exists and is writable, but is not public.</b> The lookup is restricted to public instance
-    /// properties, so a <c>private</c>, <c>protected</c> or <c>internal</c> declaration is invisible to it and
+    /// <b>The property exists and is writable, but is not public.</b> The lookup is restricted to public
+    /// properties (instance and static), so a <c>private</c>, <c>protected</c> or <c>internal</c> declaration is invisible to it and
     /// fails exactly as if it had not been written. The way this is reached in practice is an <b>explicit
     /// interface implementation</b> — <c>int IBaseIdEntity&lt;int&gt;.Id { get; set; }</c> — which is both
     /// non-public and reflected under its interface-qualified name, so neither the <c>{TypeName}Id</c> nor the
