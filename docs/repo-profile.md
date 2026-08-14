@@ -234,8 +234,7 @@ that is a judgment call the owner should make rather than have made for them.
 **116 test cases** across 15 test classes — 115 xUnit attributes, of which 114 are `[Fact]` and one is a
 `[Theory]` with two `[InlineData]` rows
 ([BaseDataAccessIdentifierRejectionTests.cs](../ProphetsWay.BaseDataAccess.Tests/BaseDataAccessIdentifierRejectionTests.cs)
-line 54). Two TFMs × 116 = **232 executions**. [CHANGELOG.md](../CHANGELOG.md) records 115 for v3.1.0, which
-is correct for that release — the 116th is the explicit-implementation characterization test added since.
+line 54). Two TFMs × 116 = **232 executions**. [CHANGELOG.md](../CHANGELOG.md) records 116 for v3.1.0, which matches the current suite, including the explicit-implementation characterization test.
 
 xUnit + Shouldly, tabs, Allman, `//setup` / `//act` / `//assert` comment structure throughout. Test class
 names describe the behavior area rather than mirroring a single type — a deliberate departure from
