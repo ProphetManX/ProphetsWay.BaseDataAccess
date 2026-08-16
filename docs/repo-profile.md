@@ -315,7 +315,7 @@ fixtures rather than samples.
 
 | Existing claim | Verdict | Evidence |
 | --- | --- | --- |
-| "Targets: .NET Standard 2.0, .NET Framework 4.8, .NET 8.0, and .NET 9.0." | **STALE — must be corrected** | [README.md](../README.md) line 38 vs. `netstandard2.0;net10.0` in the csproj |
+| "Targets: .NET Standard 2.0 and .NET 10.0." | **Accurate — previously stale, now corrected** | [README.md](../README.md) line 38 matches `netstandard2.0;net10.0` in the csproj. The line formerly read ".NET Standard 2.0, .NET Framework 4.8, .NET 8.0, and .NET 9.0"; re-verified 2026-08-16 by opening the file |
 | Entity, DAO and aggregate API reference tables | Accurate | Verified member-by-member against all 11 source files |
 | Convention table — required method, required declared return type | Accurate | Matches `DataAccessConventionException` `<remarks>` and `BaseDataAccessHelper.GetMethodByNameForType` |
 | Inheritance diagram (`All --> Dao`, `Paged --> Dao`, `SoftId --> Id`, `SoftId --> Soft`) | Accurate | Matches the declarations |
@@ -326,18 +326,18 @@ fixtures rather than samples.
 | Value-type entity cannot express "not found" as `null` | Accurate | Matches both `IBaseDataAccess.Get` and `BaseDataAccess.Get` `<remarks>` |
 | Build badge `definitionId=23` | Not verifiable from source; pre-existing | Copied from the repo as required — not invented here |
 
-**One stale line, in a README that is otherwise accurate to the code.** That single line is the only README
-defect found.
+**The one stale line has since been fixed.** No README defect remains as of the 2026-08-16 re-check.
 
 ## Gaps & Observations
 
 Ordered by consequence. None of these is a defect in behavior.
 
-1. **Three documents carry the pre-retarget TFM list.** [README.md](../README.md) line 38,
-   [docs/purpose-and-scope.md](purpose-and-scope.md) line 174, and
-   [docs/feature-requests.md](feature-requests.md) line 123 all still say
-   `netstandard2.0;net48;net8.0;net9.0` or a variant. The AGENTS.md per-repo section did too and has been
-   corrected as part of this analysis. The README line is the one a consumer sees.
+1. ~~**Three documents carry the pre-retarget TFM list.**~~ **CLOSED — re-verified 2026-08-16 by opening all
+   three.** [README.md](../README.md) now reads "Targets: .NET Standard 2.0 and .NET 10.0.";
+   [docs/purpose-and-scope.md](purpose-and-scope.md) and [docs/feature-requests.md](feature-requests.md) both
+   now state `netstandard2.0;net10.0` for the library and `net48;net10.0` for the tests. The AGENTS.md
+   per-repo section was corrected earlier. No document in the repo still carries
+   `netstandard2.0;net48;net8.0;net9.0`.
 
 2. **No Source Link or symbol package.** See the Packaging Audit. For a library whose XML documentation *is*
    the product, being unable to step into it is a real cost.
