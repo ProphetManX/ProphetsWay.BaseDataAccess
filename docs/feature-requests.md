@@ -27,9 +27,15 @@ are the source of truth. This file links to them and does not duplicate them, be
 | 7 | [Making a swallowed rollback failure observable](#7--making-a-swallowed-rollback-failure-observable) | **Rejected** — not deferred |
 | 8 | [Source Link and symbol packages](#8--source-link-and-symbol-packages) | Deferred — declined for now |
 | 9 | [A diagnosable `DataAccessConventionException` message for explicit interface implementation](#9--a-diagnosable-dataaccessconventionexception-message-for-explicit-interface-implementation) | **Proposed** — v3.2.0 at the earliest |
+| 10 | [Nullable reference type annotations on the public surface](#10--nullable-reference-type-annotations-on-the-public-surface) | **Scheduled** — v3.2.0, high priority; picked up **after** `ProphetsWay.EFTools` 3.0.0 ships |
 
 Numbers are permanent. Entries are never renumbered and never removed — [purpose-and-scope.md](purpose-and-scope.md)
 cites entries by number, and a rejected entry is decision history rather than dead weight.
+
+**One caveat about [purpose-and-scope.md](purpose-and-scope.md) as of entry 10:** its *Scope Gate — the
+near-term roadmap* table enumerates entries 1–8 and its *Recommended Refinements* table uses its own separate
+numbering. Neither has been updated for entries 9 or 10 — only `Purpose Refiner` writes that file, and this
+session was scoped to this one. Do not read the absence of a row there as a scope ruling.
 
 ## Release Eligibility — v3.1.0
 
@@ -48,6 +54,7 @@ by construction.
 | 7 | Rejected | n/a | Decided against |
 | 8 | Deferred | Technically yes — **but no** | Source Link and a `.snupkg` are packaging-only and non-breaking, so a minor release is the right home for them. Declined by the owner for now; see the entry |
 | 9 | Proposed | **No** | Changing an exception's message is a **behaviour change**, and v3.1.0 changed no behaviour by construction. It also requires a test-assertion change to land first. v3.2.0 at the earliest |
+| 10 | Scheduled | **No** | Filed after v3.1.0 shipped, and it raises `<LangVersion>` and rewrites the compiled metadata of most annotated members. Scheduled for v3.2.0 by owner decision |
 
 **The honest answer is none.** The two non-breaking candidates — 3 and 8 — are both deferred by decision rather
 than by version constraint, entry 9 arrived after the release was already scoped as documentation-only, and
@@ -509,3 +516,136 @@ How the improved message is produced. Both options are recorded because neither 
    failing.
 2. **Enumerate the failure modes in the existing static text.** Trivial, and cannot regress anything — at the
    cost of handing the developer a list to work through rather than an answer.
+
+---
+
+## 10 — Nullable reference type annotations on the public surface
+
+**Status:** **Scheduled.** Not proposed and not deferred — the owner decided this directly, rated it **high
+priority**, and set the target at **v3.2.0**, to be picked up **after `ProphetsWay.EFTools` 3.0.0 ships.** In
+his words:
+
+> i want to get these libraries both updated asap, but i want to get EFTools working and out the door first.
+
+The sequencing is the decision, not a guess at capacity: EFTools 3.0.0 is what surfaced this, and it is
+shipping with a local workaround rather than waiting on a contracts release.
+
+### How it was found
+
+While building `ProphetsWay.EFTools` 3.0.0's new `BaseDao<TEntity, TKey>` — lap 1 of that cycle — the
+implementation declared the truthful signature:
+
+```csharp
+public virtual TEntity? Get(TEntity item)
+```
+
+The build emitted **three `CS8766` warnings**, one on `BaseDao<TEntity, TKey>` and one on each of
+`BaseGetAllDao<TEntity, TKey>` and `BasePagedDao<TEntity, TKey>`, all three of which carry `#nullable enable`:
+
+> Nullability of reference types in return type of `'TEntity? BaseDao<TEntity, TKey>.Get(TEntity item)'`
+> doesn't match implicitly implemented member `'TEntity IBaseDao<TEntity>.Get(TEntity item)'`.
+
+### Why this is a defect here rather than in EFTools
+
+Both halves were verified by opening the files, not inherited:
+
+- [`IBaseDao.cs`](../ProphetsWay.BaseDataAccess/IBaseDao.cs) declares `T Get(T item);` and its own `<returns>`
+  says *"The loaded entity. For a reference-type entity, `null` when no record carries that identifier."*
+  **The interface documents a nullable return in prose and declares a non-nullable one in code.** EFTools'
+  signature is the truthful one; the interface as compiled cannot express it.
+- [`ProphetsWay.BaseDataAccess.csproj`](../ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess.csproj)
+  declares `<TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>` and carries **no `<Nullable>` and no
+  `<LangVersion>`.** The package therefore ships null-oblivious, and every consumer with nullable reference
+  types enabled is annotating against a surface that tells them nothing.
+
+The mechanical blocker is the constraint. `IBaseDao<T> where T : IBaseEntity` is an **interface** constraint,
+which does not imply a reference type, so `T` may be a `struct`. Annotating the return as `T?` on such a type
+parameter requires **C# 9 or later**, and `netstandard2.0` defaults to C# 7.3.
+
+**A correction to how that default is described elsewhere.** [repo-profile.md](repo-profile.md) reports
+`LangVersion` as unset and reads the resulting C# 7.3 as *"a consequence of the reach floor … it is why
+nullable reference types are absent."* The floor sets the **default**, not a ceiling — `<LangVersion>` is
+independent of the target framework and can be raised on a `netstandard2.0` target. Only features needing
+runtime types that framework lacks fail, and they fail individually. That file is `Repo Analyst`'s to correct;
+the correction is recorded here so the next reader does not conclude the fix is impossible.
+
+### The change
+
+Raise `<LangVersion>`, add `<Nullable>annotations</Nullable>`, and annotate the public surface — starting with
+`IBaseDao<T>.Get` as `T? Get(T item)`.
+
+**`annotations` rather than `enable` is the cheap half deliberately.** It publishes annotations to consumers
+without switching warnings on inside the library, so `BaseDataAccessHelper` — reflection-heavy, `object`-typed
+throughout — is not dragged into the same change. The cost is that the annotations are then **asserted by the
+author rather than checked by the compiler.** Moving to `enable` later is a second, larger pass and should be
+scoped as one.
+
+### What must survive from the decision
+
+1. **It is not binary-breaking.** Nullable annotations are metadata attributes. For an unconstrained `T`, `T?`
+   remains `T` at runtime and does **not** become `Nullable<T>`, so no signature changes and no consumer needs
+   to recompile. It is potentially *source*-affecting for a consumer with nullable reference types enabled —
+   which is the point, since what it affects them with is the truth.
+2. **Do not annotate one member and stop.** A partially annotated public surface is worse than an unannotated
+   one: a consumer cannot tell an intentional non-null from an unexamined one, and the compiler will not tell
+   them either. This is scoped as **one pass over the whole public surface**, not as a one-line fix.
+3. **Value-type entities need a deliberate reading.** `T?` on an unconstrained `T` means *"may be default"*,
+   not *"may be null"* — which is the correct reading for a `struct` entity, and it agrees with the paragraph
+   already on [`IBaseDataAccess.Get`](../ProphetsWay.BaseDataAccess/IBaseDataAccess.cs) stating that a
+   value-type entity cannot report "not found" as `null` and must signal a miss some other way. State that
+   agreement in the pass rather than letting someone discover it.
+4. **A metadata-only change with no runtime behaviour change fits a MINOR bump.** That is the version
+   *implication*, recorded so the release is scoped correctly. **It is not an instruction to apply one** — no
+   agent edits `app-variables.yml`.
+5. **The trigger was `ProphetsWay.EFTools` 3.0.0 lap 1, and EFTools carries a local suppression of `CS8766`
+   that must be removed once this lands.** Named here so it does not become permanent by forgetting.
+   **Verification note, 2026-08-20:** a search of the whole `ProphetsWay.EFTools` tree for `8766`, `#pragma
+   warning`, `NoWarn` and `SuppressMessage` found **nothing** — the three files carry `#nullable enable` and
+   `BaseDao.cs` line 137 declares `TEntity? Get(TEntity item)` with no suppression beside it. Either the
+   suppression had not been written when this entry was filed or it took a form the search did not match.
+   Whoever closes this entry should grep EFTools for a `CS8766` suppression and remove whatever is actually
+   there, rather than trusting this description of it.
+
+### What the pass actually has to decide — read this before estimating it
+
+The public surface is small: **roughly 25 members across nine files**, and `IBaseEntity` is a marker with no
+members while `IBaseSoftEntity`'s three properties are `DateTime`/`DateTime?` and need no decision at all. The
+volume is not the risk. **Four of the decisions are contract judgements rather than annotation mechanics**, and
+only the first was named when the request was filed:
+
+| # | Decision | Why it is not mechanical |
+| --- | --- | --- |
+| a | `IBaseDao<T>.Get` returns `T?` | The one already decided. Safe for implementers — see below |
+| b | The `item` **parameter** on `GetAll`, `GetPaged` and `GetCount` | Their own `<remarks>` say the dispatcher invokes them *"with a literal `null`"* and that an implementation **must never read** the parameter. The truthful annotation is therefore `T? item` — and parameter nullability runs the **opposite way** from return nullability |
+| c | The `IList<T>` returns on `GetAll` and `GetPaged` | The current docs say an empty collection is expected but that a `null` result *"is not intercepted and is forwarded to the caller untouched."* `IList<T>` tightens the contract into a real promise; `IList<T>?` forces every caller to null-check something the docs already call unexpected. That is a contract change either way, not an annotation |
+| d | `IBaseIdEntity<T>.Id` and `IBaseDataAccess.Get<TEntityType>(object id)` | A reference-type identifier is legitimately `null` before insert, and `BaseDataAccessNullArgumentTests` proves `null` is a **legal argument** to `Get<T>(object id)` for reference-type and nullable-value-type identifiers. `object? id` follows from a passing test, not from taste |
+
+**Decision (b) is the one that undermines the "harmless" framing, and it is worth being blunt about.**
+Annotating a *return* as nullable is safe for existing implementers — an implementation that returns non-null
+is stricter than the interface promises, and stricter is allowed silently. Annotating a *parameter* as
+nullable is not: an implementation declaring `T item` where the interface now says `T? item` is stricter than
+the interface **allows**, and stricter in that direction produces **`CS8767`** on every nullable-enabled
+implementation, `ProphetsWay.EFTools`' own new Data Access Objects among them. Doing (b) truthfully therefore
+*relocates* the warning noise this entry exists to remove rather than eliminating it. The alternatives are to
+annotate the parameter non-nullable and accept that the interface is lying in the other direction, or to
+accept the `CS8767` wave and fix it in EFTools and Example in the same coordinated pass. **Do not discover
+this at implementation time.**
+
+### One technical thing to confirm first
+
+Plain `?` annotations need no help on `netstandard2.0`: `NullableAttribute` and `NullableContextAttribute` are
+synthesized by the compiler when the target framework does not supply them. The flow-analysis attributes are a
+different matter — `MaybeNull`, `NotNullWhen`, `AllowNull` and `DisallowNull` live in
+`System.Diagnostics.CodeAnalysis` and are **not in `netstandard2.0`'s reference assemblies**, so any use of
+them means hand-declaring `internal` copies in this library. Confirm the exact set before relying on it, and
+prefer a design that needs none of them — that is also why raising `<LangVersion>` to 9 and writing `T?` beats
+the C# 8-era `[return: MaybeNull]` idiom, which would need exactly such a polyfill.
+
+### Relationship to the other entries
+
+- **Entry 9** also targets v3.2.0 and also concerns `Get`, but it is about an exception **message** at runtime.
+  The two are independent and can land in the same release without interacting.
+- **Entry 4** (async) and **entry 6** (the transaction split) are orthogonal. Annotating now does not make
+  either harder, and neither is blocked on it.
+- **Entry 1** (a conformance kit) gains slightly from this: an annotated contract is a clearer statement of
+  what a kit would be checking.
