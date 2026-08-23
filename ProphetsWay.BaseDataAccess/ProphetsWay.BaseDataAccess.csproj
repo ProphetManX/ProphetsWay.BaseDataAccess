@@ -2,6 +2,10 @@
 
 	<PropertyGroup>
 		<TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>
+		<!-- Pinned at 9.0: the minimum that allows T? on a type parameter constrained only by an interface. -->
+		<LangVersion>9.0</LangVersion>
+		<!-- annotations, not enable: publish nullability to consumers without turning warnings on inside the library. -->
+		<Nullable>annotations</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Authors>G. Gordon Nasseri</Authors>
 		<Company>Prophet's Way</Company>
@@ -11,21 +15,23 @@
 		<PackageId>ProphetsWay.BaseDataAccess</PackageId>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/ProphetManX/ProphetsWay.BaseDataAccess</RepositoryUrl>
-		<ApplicationIcon />
-		<Win32Resource />
 		<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
 		<SignAssembly>false</SignAssembly>
 		<PackageIcon>profile.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-		<Description>
-A storage-neutral contract vocabulary for a Data Access Layer (DAL): entity marker interfaces, DAO interfaces composed by capability (CRUD, retrieve-all, paging), and one aggregate DAL interface for business logic to depend on, so an entire DAL implementation can be replaced with minimal impact on its consumers. Transaction, disposal and threading rules are specified on the interfaces themselves rather than left to each implementation.
+		<Description>A storage-neutral contract vocabulary for a Data Access Layer (DAL): entity marker interfaces, DAO interfaces composed by capability (CRUD, retrieve-all, paging), and one aggregate DAL interface for business logic to depend on, so an entire DAL implementation can be replaced with minimal impact on its consumers. Transaction, disposal and threading rules are specified on the interfaces themselves rather than left to each implementation.
 
 Also included, and optional, is the abstract BaseDataAccess class: inherit it and it dispatches generic calls - Get, GetAll, GetPaged, GetCount, Insert, Update and Delete - onto the strongly typed methods of your own DAL by convention, using reflection. Implement IBaseDataAccess directly instead when reflection is not appropriate.
 
-Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more information.
-		</Description>
+Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more information.</Description>
+
+		<!-- Source Link. Microsoft.SourceLink.GitHub ships inside the SDK, so no PackageReference is needed. -->
+		<PublishRepositoryUrl>true</PublishRepositoryUrl>
+		<EmbedUntrackedSources>true</EmbedUntrackedSources>
+		<IncludeSymbols>true</IncludeSymbols>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
 
 		<!-- Assembly Override Properties -->
 		
@@ -34,12 +40,17 @@ Go to https://github.com/ProphetManX/ProphetsWay.BaseDataAccess for more informa
 		<Copyright>Copyright © Prophet's Way</Copyright>
 		<PackageProjectUrl>https://github.com/ProphetManX/ProphetsWay.BaseDataAccess</PackageProjectUrl>
 		<PackageTags>dal data-access data-access-layer dao repository abstraction interfaces decoupling</PackageTags>
-		<PackageReleaseNotes />
-		<NeutralLanguage />
+		<PackageReleaseNotes>See CHANGELOG.md, included in this package, or https://github.com/ProphetManX/ProphetsWay.BaseDataAccess/blob/main/CHANGELOG.md</PackageReleaseNotes>
+		<NeutralLanguage>en-US</NeutralLanguage>
 		<AssemblyVersion />
 		<FileVersion />
 		<InformationalVersion />
 	
+	</PropertyGroup>
+
+	<!-- Deterministic build paths in CI only; unconditionally on, it breaks local debugging. TF_BUILD is set by Azure Pipelines. -->
+	<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 
 	<ItemGroup>

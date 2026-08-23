@@ -24,9 +24,20 @@ namespace ProphetsWay.BaseDataAccess
         /// The derived method must declare a return type assignable to <see cref="IList{T}"/>. Because an array
         /// qualifies while remaining fixed size, treat the returned collection as read-only: <c>Add</c>,
         /// <c>Remove</c>, <c>Insert</c> and <c>Clear</c> are permitted by the static type but are not promised by
-        /// the convention. A <c>null</c> result means the Data Access Layer produced no collection and is
-        /// forwarded to the caller untouched. That holds for every entity type: <see cref="IList{T}"/> is a
-        /// reference type whether or not <typeparamref name="T"/> is.
+        /// the convention. The return type is non-nullable, so a <c>null</c> result is a defect in the derived
+        /// Data Access Layer rather than a permitted way of reporting "none" — and it is an unpoliced one: the
+        /// convention check examines the derived method's <i>declared</i> return type and never inspects the value
+        /// it returns, so a <c>null</c> is forwarded to the caller untouched. That holds for every entity type:
+        /// <see cref="IList{T}"/> is a reference type whether or not <typeparamref name="T"/> is.
+        /// </para>
+        /// <para>
+        /// <b>On this class specifically, that makes the non-null annotation an assertion made on the derived
+        /// Data Access Layer's behalf rather than a promise this class can keep.</b> It states an obligation and
+        /// does not verify that the obligation was met - this member returns whatever the derived method
+        /// returned. The gap is accepted deliberately rather than overlooked: a guard here would be a runtime
+        /// check inside a member whose entire job is to forward, and it was decided against. Read the annotation
+        /// accordingly - a caller relying on it is relying on the derived Data Access Layer's conformance, not on
+        /// anything this class enforces.
         /// </para>
         /// <para>
         /// The entity argument is only ever <c>null</c> as written here. When <typeparamref name="T"/> is a value
@@ -53,8 +64,20 @@ namespace ProphetsWay.BaseDataAccess
         /// The derived method must declare a return type assignable to <see cref="IList{T}"/>. Because an array
         /// qualifies while remaining fixed size, treat the returned collection as read-only: <c>Add</c>,
         /// <c>Remove</c>, <c>Insert</c> and <c>Clear</c> are permitted by the static type but are not promised by
-        /// the convention. A <c>null</c> result is forwarded to the caller untouched, for every entity type:
+        /// the convention. The return type is non-nullable, so a <c>null</c> result is a defect in the derived
+        /// Data Access Layer rather than a permitted way of reporting "none" — and it is an unpoliced one: the
+        /// convention check examines the derived method's <i>declared</i> return type and never inspects the value
+        /// it returns, so a <c>null</c> is forwarded to the caller untouched. That holds for every entity type:
         /// <see cref="IList{T}"/> is a reference type whether or not <typeparamref name="T"/> is.
+        /// </para>
+        /// <para>
+        /// <b>On this class specifically, that makes the non-null annotation an assertion made on the derived
+        /// Data Access Layer's behalf rather than a promise this class can keep.</b> It states an obligation and
+        /// does not verify that the obligation was met - this member returns whatever the derived method
+        /// returned. The gap is accepted deliberately rather than overlooked: a guard here would be a runtime
+        /// check inside a member whose entire job is to forward, and it was decided against. Read the annotation
+        /// accordingly - a caller relying on it is relying on the derived Data Access Layer's conformance, not on
+        /// anything this class enforces.
         /// </para>
         /// <para>
         /// The entity argument is only ever <c>null</c> as written here. When <typeparamref name="T"/> is a value
@@ -146,6 +169,47 @@ namespace ProphetsWay.BaseDataAccess
         /// implementation of <see cref="IBaseIdEntity{T}"/> — non-public and reflected under its
         /// interface-qualified name — is matched by neither lookup and fails as though it had not been written.
         /// </para>
+        /// <para>
+        /// <b>Overriding this member needs one piece of syntax that is not obvious.</b> An override may not
+        /// restate the interface constraint on <typeparamref name="T"/>, so <c>T?</c> is read there as
+        /// <c>Nullable&lt;T&gt;</c> unless the <c>default</c> constraint says otherwise. Without it the compiler
+        /// reports <c>CS0453</c> — <typeparamref name="T"/> "must be a non-nullable value type" to serve as the
+        /// argument to <c>Nullable&lt;T&gt;</c>, a type the developer never wrote and has no reason to expect the
+        /// mention of — and then <c>CS0508</c> for the return type that consequently no longer matches. Naming
+        /// the constraint fixes both. It is C# 9 or later, and it exists for exactly this case - an override, or
+        /// an explicit interface implementation, that needs to say <typeparamref name="T"/> is not constrained
+        /// to a value type:
+        /// <code>
+        /// public override T? Get&lt;T&gt;(object? id) where T : default =&gt; default;
+        /// </code>
+        /// </para>
+        /// <para>
+        /// <b>An existing override is not disturbed by any of this.</b> One written in a null-oblivious file -
+        /// no <c>#nullable enable</c>, no project-wide setting - still compiles clean against the older
+        /// <c>T Get&lt;T&gt;(object id)</c> shape, which is why this reaches only someone modernizing. What that
+        /// someone meets arrives in three steps, and the first two differ in <b>severity</b>:
+        /// </para>
+        /// <para>
+        /// <b>1. Enabling nullable over the override left unchanged produces two <i>warnings</i>, and the build
+        /// still succeeds.</b> <c>CS8765</c> is the parameter - <c>object id</c> declared where this member says
+        /// <c>object? id</c> is stricter than the base allows; it is the override-side counterpart of the
+        /// <c>CS8767</c> the type selectors on <see cref="IBaseGetAllDao{T}"/> and
+        /// <see cref="IBasePagedDao{T}"/> already describe. <c>CS8603</c> is "possible null reference return",
+        /// and it is the diagnostic that pushes a developer toward a <c>T?</c> return type in the first place.
+        /// Nothing has broken yet, and neither <c>CS0453</c> nor <c>CS0508</c> appears at this point.
+        /// </para>
+        /// <para>
+        /// <b>2. Following <c>CS8603</c> to a <c>T?</c> return type while omitting the <c>default</c> constraint
+        /// is what produces <i>errors</i> and fails the build.</b> <c>CS0453</c> and <c>CS0508</c> belong to this
+        /// step and not to the one before it - they are what an incorrect first attempt at the fix produces,
+        /// rather than what modernizing produces. They are named here, and in the paragraph above, in the order
+        /// one causes the other; MSBuild prints them the other way round, <c>CS0508</c> first.
+        /// </para>
+        /// <para>
+        /// <b>3. The form that compiles clean is the whole signature shown above</b> - the <c>T?</c> return, the
+        /// <c>object? id</c> parameter and <c>where T : default</c> together. The constraint clears
+        /// <c>CS0453</c> and <c>CS0508</c>; restating <c>object? id</c> clears <c>CS8765</c>.
+        /// </para>
         /// </remarks>
         /// <exception cref="DataAccessConventionException">
         /// No matching public instance <c>Get(T)</c> exists, it declares an incompatible return type,
@@ -157,7 +221,7 @@ namespace ProphetsWay.BaseDataAccess
         /// when that property is a non-nullable value type. This is a caller error rather than a wiring error,
         /// and is deliberately not a <see cref="DataAccessConventionException"/>.
         /// </exception>
-        public virtual T Get<T>(object id) where T : IBaseEntity, new()
+        public virtual T? Get<T>(object? id) where T : IBaseEntity, new()
         {
             return this.GetMethodFindAndSetIdPropertyAndInvoke<T>(id);
         }
@@ -166,8 +230,16 @@ namespace ProphetsWay.BaseDataAccess
         /// Dispatches to the public instance method <c>Insert(T)</c> on the derived class.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// The declared return type is unconstrained, including <c>void</c>; whatever the derived method returns
         /// is discarded.
+        /// </para>
+        /// <para>
+        /// <c>null</c> is not a legal <paramref name="item"/> - the plain <typeparamref name="T"/> asserts it,
+        /// as <see cref="IBaseDataAccess.Insert{TEntityType}"/> sets out - and <b>this class does not check</b>.
+        /// A <c>null</c> reaches the derived method exactly as it arrived; what happens to it there belongs to
+        /// the derived Data Access Layer, not to this class.
+        /// </para>
         /// </remarks>
         /// <exception cref="DataAccessConventionException">
         /// No matching public instance <c>Insert(T)</c> exists.
@@ -183,8 +255,16 @@ namespace ProphetsWay.BaseDataAccess
         /// return type of <see cref="int"/>.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// The return type is validated before the method is invoked, so a mis-declared <c>Update</c> cannot
         /// write to the database and only then report the defect.
+        /// </para>
+        /// <para>
+        /// <c>null</c> is not a legal <paramref name="item"/> - the plain <typeparamref name="T"/> asserts it,
+        /// as <see cref="IBaseDataAccess.Update{TEntityType}"/> sets out - and <b>this class does not check</b>.
+        /// A <c>null</c> reaches the derived method exactly as it arrived; what happens to it there belongs to
+        /// the derived Data Access Layer, not to this class.
+        /// </para>
         /// </remarks>
         /// <exception cref="DataAccessConventionException">
         /// No matching public instance <c>Update(T)</c> exists, or it declares a return type other than
@@ -201,8 +281,16 @@ namespace ProphetsWay.BaseDataAccess
         /// return type of <see cref="int"/>.
         /// </summary>
         /// <remarks>
+        /// <para>
         /// The return type is validated before the method is invoked, so a mis-declared <c>Delete</c> cannot
         /// write to the database and only then report the defect.
+        /// </para>
+        /// <para>
+        /// <c>null</c> is not a legal <paramref name="item"/> - the plain <typeparamref name="T"/> asserts it,
+        /// as <see cref="IBaseDataAccess.Delete{TEntityType}"/> sets out - and <b>this class does not check</b>.
+        /// A <c>null</c> reaches the derived method exactly as it arrived; what happens to it there belongs to
+        /// the derived Data Access Layer, not to this class.
+        /// </para>
         /// </remarks>
         /// <exception cref="DataAccessConventionException">
         /// No matching public instance <c>Delete(T)</c> exists, or it declares a return type other than

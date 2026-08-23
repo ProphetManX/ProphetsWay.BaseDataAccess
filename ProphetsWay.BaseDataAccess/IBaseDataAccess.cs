@@ -169,14 +169,22 @@ namespace ProphetsWay.BaseDataAccess
 		/// </summary>
 		/// <typeparam name="T">The entity type to retrieve.</typeparam>
 		/// <returns>
-		/// Every stored entity of type <typeparamref name="T"/>. An implementation is expected to return an empty
-		/// collection when there are none; a <c>null</c> result is not intercepted and reaches the caller
-		/// untouched. An array satisfies <see cref="IList{T}"/> while remaining fixed size, so treat the result
-		/// as read-only unless the Data Access Layer says otherwise.
+		/// Every stored entity of type <typeparamref name="T"/>, and <b>never <c>null</c></b>. An empty
+		/// collection is the expected answer when there are none: no results is not the same as no result, and
+		/// a caller is not expected to null-check this. Returning <c>null</c> is a defect in the implementation
+		/// rather than a permitted alternative. An array satisfies <see cref="IList{T}"/> while remaining fixed
+		/// size, so treat the result as read-only unless the Data Access Layer says otherwise.
 		/// </returns>
 		/// <remarks>
+		/// <para>
 		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>GetAll</c> with a return
 		/// type assignable to <see cref="IList{T}"/>.
+		/// </para>
+		/// <para>
+		/// <b>Nothing enforces the non-null guarantee.</b> <see cref="BaseDataAccess"/> does not inspect the
+		/// value a derived <c>GetAll</c> returns and would forward a <c>null</c> untouched, so this is an
+		/// obligation on the implementation rather than behaviour this library performs.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		IList<T> GetAll<T>() where T : IBaseEntity;
@@ -189,14 +197,22 @@ namespace ProphetsWay.BaseDataAccess
 		/// <param name="skip">The number of entities to bypass before the page begins.</param>
 		/// <param name="take">The maximum number of entities the page may contain.</param>
 		/// <returns>
-		/// The requested page of entities. An implementation is expected to return an empty collection when the
-		/// page lies beyond the available records; a <c>null</c> result is not intercepted and reaches the caller
-		/// untouched. An array satisfies <see cref="IList{T}"/> while remaining fixed size, so treat the result
-		/// as read-only unless the Data Access Layer says otherwise.
+		/// The requested page of entities, and <b>never <c>null</c></b>. An empty collection is the expected
+		/// answer when the page lies beyond the available records: no results is not the same as no result, and
+		/// a caller is not expected to null-check this. Returning <c>null</c> is a defect in the implementation
+		/// rather than a permitted alternative. An array satisfies <see cref="IList{T}"/> while remaining fixed
+		/// size, so treat the result as read-only unless the Data Access Layer says otherwise.
 		/// </returns>
 		/// <remarks>
+		/// <para>
 		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>GetPaged</c> with a return
 		/// type assignable to <see cref="IList{T}"/>.
+		/// </para>
+		/// <para>
+		/// <b>Nothing enforces the non-null guarantee.</b> <see cref="BaseDataAccess"/> does not inspect the
+		/// value a derived <c>GetPaged</c> returns and would forward a <c>null</c> untouched, so this is an
+		/// obligation on the implementation rather than behaviour this library performs.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		IList<T> GetPaged<T>(int skip, int take) where T : IBaseEntity;
@@ -206,7 +222,11 @@ namespace ProphetsWay.BaseDataAccess
 		/// Allows for a simple get count call without instantiating an empty object first.
 		/// </summary>
 		/// <typeparam name="T">The entity type to count.</typeparam>
-		/// <returns>The number of entities of that type, or zero when there are none.</returns>
+		/// <returns>
+		/// The number of entities of that type, or zero when there are none. Zero is the expected answer for an
+		/// empty set; the return type is <see cref="int"/>, so "no answer" is not expressible here and is not an
+		/// outcome an implementation may signal.
+		/// </returns>
 		/// <remarks>
 		/// <para>
 		/// This exists as the companion to <see cref="GetPaged{T}"/> rather than as a feature in its own right:
@@ -297,6 +317,10 @@ namespace ProphetsWay.BaseDataAccess
 		/// The value of the entity's identifier. Typed as <see cref="object"/> so that entities keyed by
 		/// <see cref="Guid"/>, <see cref="int"/>, <see cref="long"/> or anything else are all served by this one
 		/// member; nothing here constrains every entity in a Data Access Layer to share one identifier type.
+		/// <b>Annotated as nullable because <c>null</c> is a legal argument</b> wherever the resolved identifier
+		/// property can hold one - a reference-type identifier such as a <c>string</c>, or a nullable value type
+		/// such as <c>int?</c>. It is rejected only where that property is a non-nullable value type, and that
+		/// rejection is described below.
 		/// </param>
 		/// <returns>
 		/// The matching entity. When <typeparamref name="TEntityType"/> is a <b>reference type</b>, <c>null</c> is
@@ -316,7 +340,10 @@ namespace ProphetsWay.BaseDataAccess
 		/// An implementation deriving from <see cref="BaseDataAccess"/> further rejects an <paramref name="id"/>
 		/// the resolved property cannot hold — <c>null</c> among them where that property is a non-nullable value
 		/// type — with an <see cref="ArgumentException"/>, which is <b>caller error</b> rather than the wiring
-		/// error <see cref="DataAccessConventionException"/> reports.
+		/// error <see cref="DataAccessConventionException"/> reports. <b>Read the <c>?</c> on
+		/// <paramref name="id"/> accordingly:</b> it says the parameter accepts <c>null</c> at the language level,
+		/// not that every entity type will accept one at runtime. Which of the two happens is decided by the
+		/// identifier property's own type, and the annotation cannot express that distinction.
 		/// </para>
 		/// <para>
 		/// <b>Value-type entities cannot report "not found" as <c>null</c>.</b> The constraint on
@@ -330,9 +357,35 @@ namespace ProphetsWay.BaseDataAccess
 		/// this interface exists to distinguish "found the default value" from "found nothing" for a value-type
 		/// entity; a design needing that distinction should not put the entity in a <c>struct</c>.
 		/// </para>
+		/// <para>
+		/// <b>The <c>?</c> on the return type says exactly that and nothing more.</b> It reads as "may be
+		/// default" rather than "may be null", which resolves to <c>null</c> for a reference-type entity and to
+		/// <c>default(TEntityType)</c> for a value-type one — agreeing with the paragraph above rather than
+		/// contradicting it. The annotation is metadata only: for a type parameter it does not become
+		/// <c>Nullable&lt;T&gt;</c>, no signature changes, and no compiled consumer needs to recompile.
+		/// <b>For a value-type entity it is also inert:</b> it raises no diagnostic against any implementation,
+		/// gives a caller no nudge that <c>default(TEntityType)</c> did not already give them, and relieves none
+		/// of the obligation above to signal a miss some other way. It changes nothing there.
+		/// </para>
+		/// <para>
+		/// <b>Implementing this member carries one piece of syntax that is not obvious, and it is an
+		/// <i>explicit</i> implementation that meets it.</b> An explicit implementation may not restate the
+		/// constraints, so <c>TEntityType?</c> is read there as <c>Nullable&lt;TEntityType&gt;</c> unless the
+		/// <c>default</c> constraint says otherwise, and the compiler reports <c>CS0453</c> against a generic
+		/// type the implementer never wrote. Naming that constraint — C# 9 or later — fixes it:
+		/// <code>
+		/// TEntityType? IBaseDataAccess.Get&lt;TEntityType&gt;(object? id) where TEntityType : default
+		/// </code>
+		/// An ordinary implementation restates the constraints itself and needs nothing extra. What it does meet
+		/// is the parameter: declaring <c>object id</c> where this member says <c>object? id</c> is stricter than
+		/// the interface allows, and a nullable-enabled compilation reports that as <c>CS8767</c> — the same
+		/// diagnostic, for the same reason, as the type selectors on <see cref="IBaseGetAllDao{T}"/> and
+		/// <see cref="IBasePagedDao{T}"/> already describe. <see cref="BaseDataAccess"/> carries the equivalent
+		/// note for a class overriding its <c>Get</c>, where the diagnostics differ.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
-		TEntityType Get<TEntityType>(object id) where TEntityType : IBaseEntity, new();
+		TEntityType? Get<TEntityType>(object? id) where TEntityType : IBaseEntity, new();
 
 		/// <summary>
 		/// A global version of 'Insert' that can be used generically.  Allows for custom
@@ -341,12 +394,21 @@ namespace ProphetsWay.BaseDataAccess
 		/// 'Insert' should be called upon.
 		/// </summary>
 		/// <typeparam name="TEntityType">The entity type to insert.</typeparam>
-		/// <param name="item">The entity to insert.</param>
+		/// <param name="item">The entity to insert. <b>Not <c>null</c>.</b></param>
 		/// <remarks>
 		/// <para>
 		/// Implementations are expected to assign the store-generated identifier back onto <paramref name="item"/>
 		/// once the insert completes. That is a convention left to the implementation - nothing here performs it
 		/// or verifies that it happened.
+		/// </para>
+		/// <para>
+		/// <b><c>null</c> is not a legal argument, and the plain <typeparamref name="TEntityType"/> is what says
+		/// so.</b> This library publishes nullable annotations, which removed "neutral" as a third option: the
+		/// absence of a <c>?</c> here is an assertion, made deliberately, not an unexamined default.
+		/// <b>Nothing enforces it.</b> <see cref="BaseDataAccess"/> does not guard the argument - it forwards a
+		/// <c>null</c> to the derived Data Access Layer untouched - so passing one is a caller defect whose
+		/// consequence is whatever that Data Access Layer does with it. Tests in this library that push a
+		/// <c>null</c> along this path characterize the unguarded dispatcher; <b>they are not a permission</b>.
 		/// </para>
 		/// <para>
 		/// An implementation deriving from <see cref="BaseDataAccess"/> may declare its <c>Insert</c> with any return
@@ -363,12 +425,21 @@ namespace ProphetsWay.BaseDataAccess
 		/// 'Update' should be called upon.
 		/// </summary>
 		/// <typeparam name="TEntityType">The entity type to update.</typeparam>
-		/// <param name="item">The entity to update, identified by the identifier it already carries.</param>
+		/// <param name="item">
+		/// The entity to update, identified by the identifier it already carries. <b>Not <c>null</c>.</b>
+		/// </param>
 		/// <returns>The count of records the Data Access Layer reports as affected.</returns>
 		/// <remarks>
+		/// <para>
 		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>Update</c> with a return
 		/// type of <see cref="int"/>, checked before the method is invoked so a mis-declared one cannot write and only
 		/// then report the defect.
+		/// </para>
+		/// <para>
+		/// The non-null assertion on <paramref name="item"/> is the deliberate, unenforced one set out on
+		/// <see cref="Insert{TEntityType}"/>: <c>null</c> is not a legal argument, nothing guards against one,
+		/// and <see cref="BaseDataAccess"/> forwards it to the derived Data Access Layer untouched.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		int Update<TEntityType>(TEntityType item) where TEntityType: IBaseEntity, new();
@@ -381,12 +452,21 @@ namespace ProphetsWay.BaseDataAccess
 		/// 'Delete' should be called upon.
 		/// </summary>
 		/// <typeparam name="TEntityType">The entity type to delete.</typeparam>
-		/// <param name="item">The entity to delete, identified by the identifier it already carries.</param>
+		/// <param name="item">
+		/// The entity to delete, identified by the identifier it already carries. <b>Not <c>null</c>.</b>
+		/// </param>
 		/// <returns>The count of records the Data Access Layer reports as affected.</returns>
 		/// <remarks>
+		/// <para>
 		/// An implementation deriving from <see cref="BaseDataAccess"/> must declare its <c>Delete</c> with a return
 		/// type of <see cref="int"/>, checked before the method is invoked so a mis-declared one cannot write and only
 		/// then report the defect.
+		/// </para>
+		/// <para>
+		/// The non-null assertion on <paramref name="item"/> is the deliberate, unenforced one set out on
+		/// <see cref="Insert{TEntityType}"/>: <c>null</c> is not a legal argument, nothing guards against one,
+		/// and <see cref="BaseDataAccess"/> forwards it to the derived Data Access Layer untouched.
+		/// </para>
 		/// </remarks>
 		/// <exception cref="ObjectDisposedException">Thrown when this instance has already been disposed.</exception>
 		int Delete<TEntityType>(TEntityType item) where TEntityType : IBaseEntity, new();

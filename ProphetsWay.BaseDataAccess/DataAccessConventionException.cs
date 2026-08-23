@@ -129,10 +129,15 @@ namespace ProphetsWay.BaseDataAccess
     /// </para>
     /// <para>
     /// Second, <b>a <c>null</c> returned at runtime is never a convention failure.</b> It is forwarded to the
-    /// caller untouched. A <c>Get(T)</c> returning <c>null</c> means no such row exists; a <c>GetAll(T)</c>
-    /// returning <c>null</c> means the Data Access Layer produced no collection. Neither is a wiring error, and
-    /// neither produces this exception. <c>GetCount</c>, <c>Update</c> and <c>Delete</c> cannot return <c>null</c>
-    /// at all, because their declared return type is already constrained to <see cref="int"/>.
+    /// caller untouched. A <c>Get(T)</c> returning <c>null</c> means no such row exists, which is an ordinary
+    /// outcome. A <c>GetAll(T)</c> or <c>GetPaged(T, int, int)</c> returning <c>null</c> is a different matter:
+    /// <see cref="IBaseGetAllDao{T}.GetAll"/> and <see cref="IBasePagedDao{T}.GetPaged"/> require a collection,
+    /// with an empty one as the answer when there are no records, so a <c>null</c> there <b>violates that
+    /// contract</b> - but it violates it in a way this exception does not police. The convention checks the
+    /// <i>declared</i> return type before invoking, and never inspects the value that comes back, so the
+    /// <c>null</c> still reaches the caller unreported. Neither case is a wiring error and neither produces this
+    /// exception. <c>GetCount</c>, <c>Update</c> and <c>Delete</c> cannot return <c>null</c> at all, because
+    /// their declared return type is already constrained to <see cref="int"/>.
     /// </para>
     /// <para>
     /// An exception thrown by the body of a derived method that was successfully located and invoked is not a
@@ -172,7 +177,7 @@ namespace ProphetsWay.BaseDataAccess
         /// <remarks>
         /// <see cref="Exception.InnerException"/> is <c>null</c>.
         /// </remarks>
-        public DataAccessConventionException(string message)
+        public DataAccessConventionException(string? message)
             : base(message)
         {
         }
@@ -194,7 +199,7 @@ namespace ProphetsWay.BaseDataAccess
         /// The supplied <paramref name="innerException"/> is exposed unchanged through
         /// <see cref="Exception.InnerException"/>.
         /// </remarks>
-        public DataAccessConventionException(string message, Exception innerException)
+        public DataAccessConventionException(string? message, Exception? innerException)
             : base(message, innerException)
         {
         }
