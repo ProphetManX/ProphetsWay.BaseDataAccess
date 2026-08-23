@@ -17,7 +17,7 @@ BaseDataAccess gives you storage-neutral entity and DAO contracts. Your business
 - Give each entity a strongly typed DAO surface with optional CRUD, list, and paging contracts.
 - Expose one aggregate data-access interface for dependency injection and testing.
 - Use generic CRUD dispatch when it helps, or implement `IBaseDataAccess` directly when reflection is not appropriate.
-- Mix identifier types across entities; generic `Get<T>(object id)` does not impose one key type on the whole DAL.
+- Mix identifier types across entities; generic `Get<T>(object? id)` does not impose one key type on the whole DAL.
 - Work against a written transaction contract — one transaction per instance, no nesting, rolled back on disposal — instead of guessing what each DAL means by "commit".
 - Work against a written disposal contract. `IBaseDataAccess` extends `IDisposable`, so a DAL fits a `using` block and a dependency-injection scope without special handling.
 
@@ -141,20 +141,31 @@ sequenceDiagram
 
 Reflection is a convenience, not a requirement. You can override the virtual generic methods, or implement `IBaseDataAccess` directly, when you want explicit dispatch or need to avoid reflection.
 
+One thing to know before you override `Get<T>`. Its declared return type is `T?`, and restating that in an override requires `where T : default`:
+
+```csharp
+public override T? Get<T>(object? id) where T : default => default;
+```
+
+Without that clause the compiler reads `T?` as `Nullable<T>` and reports **CS0453**, complaining about a type you never wrote. `T` here is constrained only by an interface, so it is known to be neither a reference type nor a value type, and `where T : default` is how an override says exactly that. It is also the only constraint clause an override may restate — `IBaseEntity` and `new()` are inherited from the base declaration.
+
 ### The `item` parameter is a type selector, never data
 
-`GetAll(T item)`, `GetPaged(T item, int, int)`, and `GetCount(T item)` take an entity parameter for exactly one reason: to give each entity's overload a distinct CLR signature. **Nothing is read from it, and an implementation must never read it.** When the call arrives through `BaseDataAccess`, the dispatcher passes a literal `null` — materialized as `default(T)` when the entity is a `struct`.
+`GetAll(T? item)`, `GetPaged(T? item, int, int)`, and `GetCount(T? item)` take an entity parameter for exactly one reason: to give each entity's overload a distinct CLR signature. **Nothing is read from it, and an implementation must never read it.** When the call arrives through `BaseDataAccess`, the dispatcher passes a literal `null` — materialized as `default(T)` when the entity is a `struct`.
+
+The `?` is the truthful annotation for that, and it runs the opposite way from a return type. An implementation declaring a plain `T item` is **stricter than the interface allows**, which a nullable-enabled compilation reports as **CS8767**. Declare the parameter `T?` to match.
 
 Dereferencing that parameter compiles cleanly and throws `NullReferenceException` the first time a caller uses the generic surface.
 
 > **Illustrative** — not currently present in the repo. Both lines are bodies on a DAL implementing `IBaseGetAllDao<Customer>` over a `List<Customer> _customers`.
 
 ```csharp
-//throws when the call comes through the generic dispatcher - item is null
-public IList<Customer> GetAll(Customer item) => _customers.Where(c => c.Name == item.Name).ToList();
+//throws when the call comes through the generic dispatcher - item is null,
+//and a nullable-enabled compilation warns on the dereference before it ever runs
+public IList<Customer> GetAll(Customer? item) => _customers.Where(c => c.Name == item.Name).ToList();
 
 //the parameter selects the type and nothing else
-public IList<Customer> GetAll(Customer item) => _customers.ToList();
+public IList<Customer> GetAll(Customer? item) => _customers.ToList();
 ```
 
 `IBaseDao<T>.Get(T item)` is the exception. There the argument carries the identifier and is genuinely read.
@@ -193,7 +204,7 @@ If you register `IBaseDataAccess` in a dependency-injection container, the conta
 | Type | Member | Purpose |
 | --- | --- | --- |
 | `IBaseEntity` | Marker interface | Identifies an entity that can participate in the DAL contracts. |
-| `IBaseIdEntity<T>` | `T Id { get; set; }` | Adds a strongly typed `Id` property. It describes shape only — `Get<T>` does **not** key on it, resolving the identifier by name instead. Implementing it *implicitly* satisfies the `Id` fallback while changing no dispatch behavior; implementing it **explicitly** satisfies neither lookup. |
+| `IBaseIdEntity<T>` | `T? Id { get; set; }` | Adds a strongly typed `Id` property. Read the `?` as "may be default" rather than "may be null" — an entity constructed but not yet inserted carries no identifier, and for an `int`, `long`, or `Guid` key the annotation resolves to `default(T)`, never to `Nullable<T>`. It describes shape only — `Get<T>` does **not** key on it, resolving the identifier by name instead. Implementing it *implicitly* satisfies the `Id` fallback while changing no dispatch behavior; implementing it **explicitly** satisfies neither lookup. |
 | `IBaseSoftEntity` | `CreatedDate`, `UpdatedDate`, `DeletedDate` | Carries timestamps for creation, updates, and soft deletion. It does not itself implement delete behavior. |
 | `IBaseSoftIdEntity<T>` | Combined contract | Combines `IBaseSoftEntity` and `IBaseIdEntity<T>`. |
 
@@ -201,22 +212,22 @@ If you register `IBaseDataAccess` in a dependency-injection container, the conta
 
 | Type | Member | Purpose |
 | --- | --- | --- |
-| `IBaseDao<T>` | `Get(T)` | Loads the entity matching the identifier carried by the argument. Use the **return value**; the contract does not promise the argument was populated, and both "populate the instance handed in" and "materialize a fresh one" conform. |
+| `IBaseDao<T>` | `T? Get(T)` | Loads the entity matching the identifier carried by the argument, or `null` when no record carries it. Use the **return value**; the contract does not promise the argument was populated, and both "populate the instance handed in" and "materialize a fresh one" conform. |
 | `IBaseDao<T>` | `Insert(T)` | Inserts an entity. Assigning the store-generated identifier back onto it is an implementation convention the library neither performs nor verifies. |
 | `IBaseDao<T>` | `Update(T)` | Updates an entity and returns the rows affected — `0` when the identifier matches no stored row. Returning `1` for a row that exists is an implementation convention, not a library guarantee. |
 | `IBaseDao<T>` | `Delete(T)` | Deletes an entity and returns the rows affected, on the same terms as `Update`. |
-| `IBaseGetAllDao<T>` | `GetAll(T)` | Retrieves all entities of `T`. The parameter is a **type selector only** and arrives as `null` through the generic dispatcher — never read it. |
-| `IBasePagedDao<T>` | `GetPaged(T, int skip, int take)` | Retrieves a subset of entities. The parameter is a type selector only. |
-| `IBasePagedDao<T>` | `GetCount(T)` | Returns the total `GetPaged` is paged against. It belongs to the paging capability rather than standing on its own; the parameter is a type selector only. |
+| `IBaseGetAllDao<T>` | `IList<T> GetAll(T?)` | Retrieves all entities of `T`, and **never `null`** — an empty list is the expected answer when there are none. The parameter is a **type selector only** and arrives as `null` through the generic dispatcher — never read it. |
+| `IBasePagedDao<T>` | `IList<T> GetPaged(T?, int skip, int take)` | Retrieves a subset of entities, and **never `null`** — an empty list is the expected answer when the page lies beyond the available records. The parameter is a type selector only. |
+| `IBasePagedDao<T>` | `int GetCount(T?)` | Returns the total `GetPaged` is paged against; zero is the answer for an empty set. It belongs to the paging capability rather than standing on its own; the parameter is a type selector only. |
 
 ### Aggregate DAL contracts
 
 | Type | Member | Purpose |
 | --- | --- | --- |
-| `IBaseDataAccess` | `Get<T>(object id)` | Retrieves an entity by assigning the ID to a new probe entity. |
-| `IBaseDataAccess` | `GetAll<T>()` | Dispatches to `GetAll(T)` without requiring the caller to create a probe. |
-| `IBaseDataAccess` | `GetPaged<T>(int skip, int take)` | Dispatches to `GetPaged(T, int, int)`. |
-| `IBaseDataAccess` | `GetCount<T>()` | Dispatches to `GetCount(T)`. The companion to `GetPaged<T>`, not a standalone count. |
+| `IBaseDataAccess` | `TEntityType? Get<TEntityType>(object? id)` | Retrieves an entity by assigning the ID to a new probe entity. `null` is a legal argument wherever the resolved identifier property can hold one; a `null` return means no entity carries that identifier. |
+| `IBaseDataAccess` | `GetAll<T>()` | Dispatches to `GetAll(T?)` without requiring the caller to create a probe. |
+| `IBaseDataAccess` | `GetPaged<T>(int skip, int take)` | Dispatches to `GetPaged(T?, int, int)`. |
+| `IBaseDataAccess` | `GetCount<T>()` | Dispatches to `GetCount(T?)`. The companion to `GetPaged<T>`, not a standalone count. |
 | `IBaseDataAccess` | `Insert<T>(T)`, `Update<T>(T)`, `Delete<T>(T)` | Exposes generic write operations. |
 | `IBaseDataAccess` | `TransactionStart()`, `TransactionCommit()`, `TransactionRollBack()` | Lets business logic coordinate multiple DAL calls in one transaction. Each throws `InvalidOperationException` when called at the wrong time. |
 | `IBaseDataAccess` | `Dispose()` — inherited from `IDisposable` | Releases what the DAL created and rolls back any transaction still open. Idempotent, and never throws. |
@@ -232,12 +243,14 @@ If your concrete DAL inherits `BaseDataAccess`, each generic call requires an ex
 | Generic call | Required concrete method | Required declared return type |
 | --- | --- | --- |
 | `Get<T>(id)` | `Get(T)` | `T` or a subclass of `T` |
-| `GetAll<T>()` | `GetAll(T)` | Assignable to `IList<T>` |
-| `GetPaged<T>(skip, take)` | `GetPaged(T, int, int)` | Assignable to `IList<T>` |
-| `GetCount<T>()` | `GetCount(T)` | `int` |
+| `GetAll<T>()` | `GetAll(T?)` | Assignable to `IList<T>` |
+| `GetPaged<T>(skip, take)` | `GetPaged(T?, int, int)` | Assignable to `IList<T>` |
+| `GetCount<T>()` | `GetCount(T?)` | `int` |
 | `Insert<T>(item)` | `Insert(T)` | Unconstrained; the result is discarded |
 | `Update<T>(item)` | `Update(T)` | `int` |
 | `Delete<T>(item)` | `Delete(T)` | `int` |
+
+The `?` on those three parameters is metadata, not part of the signature the lookup matches — the dispatcher compares CLR parameter types and never sees it. Declare it anyway: `IBaseGetAllDao<T>` and `IBasePagedDao<T>` declare `T? item`, so an implementation declaring a plain `T item` is stricter than the interface allows and a nullable-enabled compilation reports **CS8767**. Return types run the other way and need no such care — `IBaseDao<T>.Get` declares `T?`, which is CLR type `T`, and an implementation that returns a non-null `T` is stricter than the interface promises, which is allowed silently.
 
 For `Get<T>(id)`, the dispatcher creates `T` and sets `{TypeName}Id` first, falling back to `Id`. The property must have a setter, though that setter **need not be public** — a `private set`, `protected set`, `internal set`, or `init` is resolved and invoked exactly as a public one is. Only the complete absence of a set accessor is a failure — and that leniency extends to the *accessor* alone, not to the property declaration, which must still be public to be found at all, as the next paragraph explains. Other operations do not require either property.
 
@@ -259,7 +272,13 @@ Beyond the dispatch convention, `BaseDataAccess` declares `TransactionStart`, `T
 
 The dispatcher validates the method and its declared return type before invoking it. A bad `Update` or `Delete` signature therefore fails before it can write data. Exceptions thrown by the concrete DAL, the entity constructor, or the identifier setter reach the caller as their original types with their original stack traces; they are not wrapped in `TargetInvocationException`.
 
-`Get<T>`, `GetAll<T>`, and `GetPaged<T>` may return `null`, and a `null` is forwarded to the caller untouched rather than treated as a convention failure. Collection return values should be treated as read-only because arrays satisfy `IList<T>` but do not support mutation.
+`Get<T>` returns `T?`. For a reference-type entity, a `null` means no row carries that identifier — an ordinary outcome, forwarded to the caller untouched rather than treated as a convention failure.
+
+**`GetAll<T>` and `GetPaged<T>` return a non-nullable `IList<T>`, and an empty list is the expected answer when there are no results.** No results is not the same as no result, so a caller is not expected to null-check them. Returning `null` is a defect in the derived DAL rather than a permitted way of reporting "none" — and it is an **unpoliced** defect: the convention check examines the derived method's *declared* return type and never inspects the value it returns, so a `null` reaches the caller untouched instead of raising `DataAccessConventionException`. The guarantee rests on your implementation honoring it. `GetCount<T>` returns `int`, so zero is the answer for an empty set and "no answer" is not expressible at all.
+
+`Insert<T>`, `Update<T>`, and `Delete<T>` declare a non-nullable `T`. There is no entity to write when the argument is `null`, so it is outside the contract, and the dispatcher does not check for one — a `null` argument is an unguarded caller error, not a supported case.
+
+Collection return values should be treated as read-only because arrays satisfy `IList<T>` but do not support mutation.
 
 One consequence is worth knowing before you model an entity as a `struct`: **a value-type entity cannot report "not found" as `null`.** The `new()` constraint admits structs, but the derived `Get` must declare a return type assignable to `T`, which for a value type admits only `T` itself. A DAL keyed on a value-type entity must signal a miss another way — a sentinel value, a member outside `IBaseDataAccess`, or modeling the entity as a reference type.
 
@@ -319,7 +338,7 @@ public sealed class InMemoryAppDataAccess : BaseDataAccess, IAppDataAccess
     private List<Customer> _snapshot;
     private bool _disposed;
 
-    public Customer Get(Customer item)
+    public Customer? Get(Customer item)
     {
         ThrowIfDisposed();
         return _customers.FirstOrDefault(c => c.Id == item.Id);
@@ -351,13 +370,13 @@ public sealed class InMemoryAppDataAccess : BaseDataAccess, IAppDataAccess
     }
 
     //item is a type selector - it arrives null through the dispatcher and is never read
-    public IList<Customer> GetPaged(Customer item, int skip, int take)
+    public IList<Customer> GetPaged(Customer? item, int skip, int take)
     {
         ThrowIfDisposed();
         return _customers.Skip(skip).Take(take).ToList();
     }
 
-    public int GetCount(Customer item)
+    public int GetCount(Customer? item)
     {
         ThrowIfDisposed();
         return _customers.Count;
@@ -472,7 +491,7 @@ Supply the type argument explicitly. Without it, a call such as `dal.Get(company
 
 ### Why methods accept an entity parameter
 
-Every entity-specific DAO uses the same operation names. Passing `T` gives each overload a unique CLR signature, allowing one aggregate interface and implementation to expose `Get(Company)`, `Get(User)`, and other entity operations together. For `GetAll`, `GetCount`, and `GetPaged`, the parameter is a type discriminator only — the generic dispatcher passes `null`, and an implementation must never read it.
+Every entity-specific DAO uses the same operation names. Passing `T` gives each overload a unique CLR signature, allowing one aggregate interface and implementation to expose `Get(Company)`, `Get(User)`, and other entity operations together. For `GetAll`, `GetCount`, and `GetPaged`, the parameter is a type discriminator only — the generic dispatcher passes `null`, and an implementation must never read it. That is why those three declare it `T?` while `Get`, `Insert`, `Update`, and `Delete` declare a plain `T`.
 
 If this convention does not fit your API, define explicit methods such as `GetCustomer(int customerId)` in your own DAO interfaces and implement `IBaseDataAccess` without inheriting `BaseDataAccess`.
 

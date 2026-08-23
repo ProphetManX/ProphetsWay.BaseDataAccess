@@ -1,3 +1,131 @@
+# v3.2.0
+### Two things might say something when you upgrade, and neither of them is a break
+This release annotates the public surface for nullable reference types. The package previously shipped
+null-oblivious, which meant that if you had nullable enabled you were annotating your own code against a surface
+that told you nothing — and in one place the documentation described a nullable return while the code declared a
+non-nullable one. That is now fixed by making the code say what the documentation already said.
+
+**If your project does not have nullable enabled, nothing here reaches you.** The package installs, binds and
+behaves exactly as 3.1.0 did. Skip to the packaging notes. If it is enabled and you implement these interfaces,
+there are exactly two places that will speak up, and both are one keystroke.
+
+### 1. The type selector on ```GetAll```, ```GetPaged``` and ```GetCount``` is now ```T?```
+That parameter has always been a type selector rather than a value — the dispatcher genuinely passes ```null```,
+and the documentation has always said an implementation must never read it. It is now annotated to match. Because
+this is a parameter rather than a return, nullability runs the opposite way from what you might expect: your
+implementation declaring a plain ```T``` is *stricter* than the interface allows, and that is what gets reported.
+
+```c#
+	//CS8767 on GetAll, GetPaged and GetCount
+	public IList<Company> GetAll(Company item) { ... }
+
+	//annotate the parameter to match
+	public IList<Company> GetAll(Company? item) { ... }
+```
+
+```CS8767``` is a warning, so your build still succeeds — unless you treat warnings as errors, in which case
+this one stops it. The same diagnostic, for the same reason, applies to an ordinary implementation of
+```IBaseDataAccess.Get``` declaring ```object id``` where the interface now says ```object? id```, and to an
+entity declaring a non-nullable ```Id``` against ```IBaseIdEntity<T>```.
+
+### 2. Overriding or explicitly implementing ```Get<T>``` needs ```where T : default```
+This is the one piece of syntax in the release that is not obvious. An override may not restate the interface
+constraint on ```T```, so ```T?``` is read there as ```Nullable<T>``` unless the ```default``` constraint says
+otherwise. Leave it off and the compiler reports ```CS0453``` — that ```T``` "must be a non-nullable value type"
+to serve as the argument to ```Nullable<T>```, a generic type you never wrote and have no reason to expect the
+mention of — and then ```CS0508``` for the return type that consequently no longer matches.
+
+```c#
+	//error CS0453, then error CS0508
+	public override T? Get<T>(object? id) { ... }
+
+	//name the constraint - C# 9 or later
+	public override T? Get<T>(object? id) where T : default { ... }
+```
+
+**Be clear about when this actually reaches you, because it is not on upgrade.** An existing null-oblivious
+override is undisturbed and still compiles clean. Turning nullable on without touching it produces two
+*warnings* and a successful build — ```CS8765``` for the ```object id``` parameter, and ```CS8603``` for a
+possible null reference return. It is following that ```CS8603``` to a ```T?``` return while omitting the
+constraint that produces the *errors*. They are what an incomplete first attempt at the fix produces, not what
+modernizing produces. An explicit implementation of ```IBaseDataAccess.Get``` meets the same thing for the same
+reason; an ordinary implementation restates its own constraints and needs nothing extra.
+
+### Nothing you have compiled needs rebuilding
+```T?``` on a type parameter that is not constrained to a value type is metadata and nothing else. It does not
+become ```Nullable<T>```: ```IBaseIdEntity<int>.Id``` is still an ```int``` at runtime, and ```Get<Company>```
+still returns a ```Company```. No signature changed, no assembly compiled against 3.1.0 breaks, and no consumer
+has to recompile. The whole release is source-affecting only, and only for a nullable-enabled compilation.
+
+What is now annotated: ```T? Get(T item)``` on ```IBaseDao<T>```; ```IList<T> GetAll(T? item)```;
+```IList<T> GetPaged(T? item, int, int)```; ```int GetCount(T? item)```;
+```TEntityType? Get<TEntityType>(object? id)``` on both ```IBaseDataAccess``` and ```BaseDataAccess```;
+```T? Id { get; set; }``` on ```IBaseIdEntity<T>```; and ```string?``` / ```Exception?``` on the
+```DataAccessConventionException``` constructors.
+
+On ```Id``` and on the ```Get``` returns, read the ```?``` as "may be default" rather than "may be null" — for
+the ```int```, ```long``` and ```Guid``` identifiers these interfaces are usually closed over, it resolves to
+zero or the empty ```Guid```, not to ```null```. For a value-type entity the annotation is inert: it raises no
+diagnostic and relieves none of the existing obligation to signal a miss some other way.
+
+### Two answers the contract now rules out — and does not police
+```GetAll``` and ```GetPaged``` are declared to return a non-nullable ```IList<T>```. An empty collection is the
+expected answer when there are no records; no results is not the same as no result, and a caller is not expected
+to null-check the return. Returning ```null``` is now a defect rather than a permitted alternative. ```GetCount```
+returns an ```int```, so "no answer" is not expressible there and is not an outcome an implementation may signal.
+
+**Nothing enforces either of these, which is why they are stated as obligations.** The convention check examines
+a derived method's *declared* return type before invoking it and never inspects the value that comes back, so a
+```null``` from your ```GetAll``` is still forwarded to your caller untouched and will **not** surface as a
+```DataAccessConventionException```. On ```BaseDataAccess``` in particular the annotation is an assertion made on
+your Data Access Layer's behalf rather than a promise the class can keep — a guard there would be a runtime check
+inside a member whose entire job is to forward, and it was decided against deliberately.
+
+### ```null``` is not a legal entity argument, and the plain ```T``` now says so
+Publishing annotations removed "neutral" as a third option: a parameter is now either annotated nullable or
+asserted non-null. The absence of a ```?``` on ```item``` in ```Insert```, ```Update``` and ```Delete``` is the
+second of those, chosen deliberately rather than left unexamined. Nothing guards it — the dispatcher forwards a
+```null``` to your Data Access Layer untouched — so passing one is a caller defect whose consequence is whatever
+your implementation does with it. If you pass a possibly-null variable from a nullable-enabled call site, you
+will now get a diagnostic where 3.1.0 gave you silence. Tests in this library that push a ```null``` along that
+path characterize the unguarded dispatcher; they are not a permission, and your implementation remains free to
+reject one however it sees fit.
+
+### Why C# 9 and ```annotations``` rather than ```latest``` and ```enable```
+```<LangVersion>``` is pinned at ```9.0``` because that is the exact minimum that allows ```T?``` on a type
+parameter constrained only by an interface. ```latest``` would have worked today and become a trap on the
+```netstandard2.0``` leg later. ```<Nullable>``` is set to ```annotations``` rather than ```enable```, which
+publishes the nullability to you while leaving warnings off inside the library — the reflection-heavy internals
+were deliberately not dragged into this release.
+
+### You can now step into the library
+Source Link and symbol packages are on: ```PublishRepositoryUrl```, ```EmbedUntrackedSources```,
+```IncludeSymbols```, and ```SymbolPackageFormat``` set to ```snupkg```. If you hit a
+```DataAccessConventionException```, you can step into ```BaseDataAccessHelper``` and watch the convention
+resolution that produced it, rather than inferring it from the message. That matters more here than in most
+packages, because the XML documentation on ```IBaseDataAccess``` and ```DataAccessConventionException``` is a
+large part of what this library actually is.
+
+**One honest caveat: the ```.snupkg``` is produced but is not yet pushed to the feed.** The publish step in the
+shared pipeline still pushes ```*.nupkg``` only, so do not expect symbols to be available for download until
+that lands. ```ContinuousIntegrationBuild``` is switched on only under ```TF_BUILD```, so the deterministic path
+rewriting applies to the official build and does not degrade local debugging. **No ```PackageReference``` was
+added** — Source Link ships inside the SDK — so this package still has no package dependencies at all.
+
+### Packaging metadata
+```<NeutralLanguage>``` now carries ```en-US``` and ```<PackageReleaseNotes>``` points at this changelog, both
+having been empty stubs. The stray leading and trailing whitespace in ```<Description>``` is trimmed, so the
+nuget.org listing no longer opens with a blank line. The inert ```<ApplicationIcon />``` and ```<Win32Resource />```
+stubs are removed. None of this changes the assembly.
+
+### Verification
+The library builds with zero warnings and zero errors on both ```netstandard2.0``` and ```net10.0```, and
+```dotnet pack``` produces both a ```.nupkg``` and a ```.snupkg``` with zero warnings. All 116 tests pass on
+each of ```net10.0``` and ```net48```, 232 executions, none failing. **No test was added or changed in this
+release**, which is the point worth taking from it: nothing here alters behavior. Every change is an annotation,
+a documentation comment, or a packaging property.
+
+
 # v3.1.0
 ### Nobody is stranded — read this first
 This release retargets the library to ```netstandard2.0;net10.0```, dropping the dedicated ```net48```, ```net8.0```
