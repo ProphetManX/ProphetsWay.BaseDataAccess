@@ -5,6 +5,26 @@ v3.1.0. The factual base — API inventory, packaging audit, target frameworks, 
 [docs/repo-profile.md](repo-profile.md) and is not re-derived here. Deferred decisions live in
 [docs/feature-requests.md](feature-requests.md)._
 
+> ### Currency refresh — 2026-08-23
+>
+> **This document had not moved since 2026-08-13, and three feature requests were filed or closed underneath
+> it in the interim.** The scope analysis itself survived that gap intact — no verdict below was wrong, because
+> none of the three widened the purpose — but the [Scope Gate](#scope-gate--the-near-term-roadmap) table
+> enumerated **entries 1–8 only** and showed entry 8 as `Deferred` when it had shipped. Both are corrected in
+> place. The one-sentence purpose, the cohesion map and the extraction verdict are **unchanged**, and that is a
+> finding rather than an omission: v3.2.0 added metadata to the contract surface without adding a member to it.
+>
+> **What landed in v3.2.0**, set in `app-variables.yml` at `3` / `2` / `0` and **not yet tagged or published**:
+> nullable **annotations** on the whole public surface ([entry 10](feature-requests.md), `Done`), and Source
+> Link with symbol packages ([entry 8](feature-requests.md), `Done` — the decline reversed). Neither moved a
+> member. **The package still has zero `PackageReference` entries**, which is the property the entire
+> extraction analysis below rests on, and it is intact.
+>
+> **The owner's near-term question, asked and answered on this date:** *nothing in this repository needs to be
+> built within a week.* The only time-critical item anywhere in the family was `ProphetsWay.EFTools`' D12
+> release note, which has since landed. Entries 1–7, 9 and 11 are all deferrable on their own merits and none
+> of them blocks a release here.
+
 ## Proposed One-Sentence Purpose
 
 A storage-neutral contract vocabulary for a Data Access Layer — entity markers, capability-composed DAO
@@ -124,8 +144,11 @@ the point.
 ## Scope Gate — the near-term roadmap
 
 Every entry in [feature-requests.md](feature-requests.md) measured against the one-sentence purpose at the top of
-this document. **Seven of the eight sit correctly.** One is only in scope for the family rather than for this
+this document. **Ten of the eleven sit correctly.** One is only in scope for the family rather than for this
 package, and the one that would have widened the purpose has since been rejected outright, which settles it.
+
+**Rows 9, 10 and 11 were added on 2026-08-23** — this table enumerated 1–8 for ten days while three entries
+were filed and two closed beneath it. **Row 8's verdict did not change; only its status did.**
 
 | # | Planned work | Verdict | Because |
 | --- | --- | --- | --- |
@@ -136,8 +159,12 @@ package, and the one that would have widened the purpose has since been rejected
 | 5 | A standalone count capability | **Out of scope** | A useful count carries filters a generic member cannot express. Correctly rejected — the consumer's own `I{Entity}Dao` is the right home |
 | 6 | Splitting transactions into `IBaseAccessWithTransactions` | **In scope, and it sharpens the purpose** | It makes a capability composable that is currently mandated, which is the design language the rest of the library already speaks |
 | 7 | Making a swallowed rollback failure observable | **Moot — rejected** | It would have widened the purpose; it is not being built. See below |
-| 8 | Source Link and symbol packages | **In scope** | Packaging and lifecycle, not surface. No member changes, so the purpose sentence is untouched. Deferred by decision |
+| 8 | Source Link and symbol packages | **In scope** | Packaging and lifecycle, not surface. No member changes, so the purpose sentence is untouched. ~~Deferred by decision~~ — **`Done` 2026-08-23, shipped in v3.2.0**; the decline was reversed by the owner. **The verdict was right and the deferral was the part that expired** |
+| 9 | A diagnosable `DataAccessConventionException` message for explicit interface implementation | **In scope** | The exception is published surface, and its message is how the dispatcher's convention teaches itself to whoever trips it. Making a contract legible to the developer who violated it is the vocabulary doing its job, not a widening of it. `Proposed`; no member moves, so the purpose sentence is untouched |
+| 10 | Nullable reference type annotations on the public surface | **In scope, and it sharpens the purpose** | This is the sharpest fit of the eleven. A *contract vocabulary* that cannot state whether `Get` may return nothing is under-specifying the thing it exists to specify — the annotation makes the surface say in code what its `<remarks>` already said in prose. **`Done` in v3.2.0.** Metadata only: no signature changed and no consumer must recompile |
+| 11 | `<Nullable>enable</Nullable>` — checking the annotations rather than asserting them | **In scope, and it is internal** | Entry 10 published a **claim**; this verifies the library honours it. Measured at **17 warnings, all internal to `BaseDataAccess.cs` and `BaseDataAccessHelper.cs`, none on the public surface** — so it changes no published annotation and cannot widen the purpose. `Proposed`, **no owner decision taken.** Do not read it as a half-finished entry 10; `annotations` was chosen deliberately over `enable` |
 | — | The v3.1.0 retarget itself | **In scope** | Packaging and lifecycle. No public surface moved; nothing in this document's analysis depends on the target list |
+| — | The v3.2.0 annotations and Source Link | **In scope** | Rows 8 and 10 as shipped. **Nothing in this document's analysis moved with them** — the cohesion map groups members, and no member was added, removed or re-signatured |
 
 ### Entry 1 — the right answer is a sibling package, not a bigger one
 
@@ -189,6 +216,31 @@ Ordered by value. None requires a package split.
 | 4 | Decide explicitly whether async belongs in the vocabulary | A modern EF/Cosmos DAL is async-first; a sync-only contract forces `.Result` or a parallel hand-rolled surface. **The decision is now recorded** — deferred wholesale, and breaking when taken up; see entry 4 in [feature-requests.md](feature-requests.md). What remains is the timing, and v3.1.0 does not change it — see below | Low (decision) | No (decision only) |
 | 5 | ~~Add a test for an entity that implements `IBaseIdEntity<T>` *explicitly*~~ | **Done.** A characterization test in `BaseDataAccessIdResolutionTests` now pins it: explicit implementation makes the property non-public and interface-qualified, both `GetProperty` lookups miss, and a `DataAccessConventionException` is raised before dispatch. The behaviour is correct; the *message* is not diagnosable for this case, which is now entry 9 in [feature-requests.md](feature-requests.md) | — | No |
 | 6 | ~~Refresh the `AGENTS.md` "Known Deviations" table~~ | **Done.** All three deviations shipped as fixed in v3.0.0 and the table now records an empty state | — | No |
+
+### What v3.2.0 changes here — nothing, and that is the finding rather than an oversight
+
+**Two feature requests shipped between this document's last refresh and 2026-08-23, and neither moved a row
+above.** That is worth stating explicitly, because a reader who knows a release landed and finds a scope
+document unchanged will reasonably suspect the document of being stale rather than the release of being
+scope-neutral.
+
+- **Nullable annotations** ([entry 10](feature-requests.md), `Done`) are **metadata on members that already
+  existed**. `T? Get(T item)` is the same member `IBaseDao<T>` always declared, now saying in code what its
+  `<returns>` said in prose. Refinement 1 — splitting the transaction members out of `IBaseDataAccess` — is
+  exactly as valid and exactly as breaking as it was at v3.0.0, because annotating a member does not change
+  who has to implement it.
+- **Source Link and symbol packages** ([entry 8](feature-requests.md), `Done`) are build and packaging
+  properties. They change what a consumer can *step into*, not what they can *call*.
+
+**One thing v3.2.0 does change is a claim made elsewhere about this library, and it is worth recording here
+because it is repeated in seven repositories.** The shared conventions block states that `netstandard2.0`
+defaults to C# 7.3 and that this "is why nullable reference types do not work in these libraries regardless of
+what a csproj claims." **The target framework sets the language default, not a ceiling** — `<LangVersion>` is
+independent of it, and this library now ships C# 9 annotations on a `netstandard2.0` asset. The generalization
+is what needs correcting, **not this repository**. It is generated from
+`prophets-pipelines/conventions/AGENTS.shared.md`, so it is neither this document's nor this repository's to
+edit; raise it with the owner and let the sync carry it. Recorded here so the next reader does not conclude
+`<Nullable>annotations</Nullable>` in the csproj is a mistake.
 
 ### What the LTS-only target standard changes here — nothing in scope, one thing in timing
 

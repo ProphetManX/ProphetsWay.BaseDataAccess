@@ -304,21 +304,69 @@ dispatch in exchange for reflection. Do not describe this package as interfaces-
 This is the **root of the Data Access family**. A breaking change here cascades into EFTools and
 every consumer. Treat its surface as close to frozen.
 
+### 3.2.0 — shipped 2026-08-23. Two things landed, and both are decisions rather than accidents
+
+`app-variables.yml` reads `Major: '3'` / `Minor: '2'` / `Patch: '0'`, opened 2026-08-23. **Never change
+it.** `CHANGELOG.md` opens with a `v3.2.0` entry. Everything below was read from
+[ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess.csproj](ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess.csproj)
+on that date, not carried.
+
+**1 — Nullable *annotations*, deliberately not `enable`.** The csproj carries
+`<Nullable>annotations</Nullable>` and `<LangVersion>9.0</LangVersion>`, each with a comment on the line
+above giving its reason: annotations **publish** nullability to consumers without turning warnings on
+inside the library, and 9.0 is the minimum language version that allows `T?` on a type parameter
+constrained only by an interface. **This is the correct shape for a contracts package** — a consumer
+compiling with nullable enabled gets a surface that tells them something, and the library takes on no
+internal churn. It is what let `ProphetsWay.EFTools` delete **ten `CS8766` suppression pairs** in its
+commit `0da679f`: 3.1.0 shipped null-oblivious, so the compiler could not check what those pragmas were
+silencing, and 3.2.0 annotated means it now does. [FR 10](docs/feature-requests.md) is `Done`;
+[FR 11](docs/feature-requests.md) — going further to `<Nullable>enable</Nullable>` — is `Proposed` with
+**no owner decision taken**. Do not treat `annotations` as a half-finished `enable`.
+
+> **This contradicts a generalization in the shared block, and the shared block is the one that is
+> wrong.** The Target Frameworks section states that `netstandard2.0` defaults to C# 7.3 and that this
+> "is why nullable reference types do not work in these libraries regardless of what a csproj claims."
+> `LangVersion` is independent of the target framework, and nullable **annotations** need no BCL support
+> — this library ships them on a `netstandard2.0` asset today. **Do not hand-edit the shared block to
+> fix this**; it is generated from `prophets-pipelines/conventions/AGENTS.shared.md` and a change there
+> propagates to seven repos. Raise it with the owner and let `/sync-agents-md` carry it.
+
+**2 — Source Link and symbol packages, with no `PackageReference`.** `PublishRepositoryUrl`,
+`EmbedUntrackedSources`, `IncludeSymbols` and `SymbolPackageFormat` = `snupkg` are all present with
+values, and `ContinuousIntegrationBuild` sits in its own `TF_BUILD`-conditioned `PropertyGroup` so
+deterministic paths apply in CI only and local debugging still works.
+**`Microsoft.SourceLink.GitHub` ships inside the SDK, so nothing was added** — the library still has
+**zero `PackageReference` entries**, which is the property that makes it safe for a contracts project to
+depend on. [FR 8](docs/feature-requests.md) is `Done — 2026-08-23`.
+
+**Word the symbol half carefully or you will send a reader looking for code that does not exist.**
+Symbols publish, and did publish for `3.2.0-504.Alpha` — **but by way of the `nuget.exe` 6.4.0 pin in
+`prophets-pipelines/stages/deploy-release.yml`, not a `.snupkg` push step.** 6.4.0 pushes a co-located
+`.snupkg` on the ordinary `.nupkg` push; the measurement is a `PUT` to `/api/v2/symbolpackage/` returning
+`Created` in the 2026-08-23T04:45 log. A push step **was** written, in `63dd56b`, and substantially
+reverted the same day in `6110d69`. Do not restore it, and do not describe the `*.nupkg` push glob as a
+defect — the glob is unchanged and the conclusion once drawn from it was wrong.
+
+> **`CHANGELOG.md` is stale on exactly this point, and it is not this file's to fix.** Its v3.2.0 entry
+> still reads *"One honest caveat: the `.snupkg` is produced but is not yet pushed to the feed — the
+> publish step in the shared pipeline still pushes `*.nupkg` only."* That was true when written and is
+> **false now**. `Changelog Author` owns that file; recorded here so the next reader does not repeat it.
+
 ### Layout
 
 | Project | Role |
 |---|---|
-| `ProphetsWay.BaseDataAccess/` | The library — contracts plus the reflection dispatcher. Targets `netstandard2.0;net10.0` |
-| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; 116 tests over `net48`/`net10.0`, 232 executions |
+| `ProphetsWay.BaseDataAccess/` | The library — **11 source files, zero `PackageReference` entries**, contracts plus the reflection dispatcher. Targets `netstandard2.0;net10.0` |
+| `ProphetsWay.BaseDataAccess.Tests/` | xUnit + Shouldly; **116 tests** over `net48`/`net10.0`, **232 executions**. Re-derived 2026-08-23 by grepping every xUnit attribute in the project — **114 `[Fact]` plus one `[Theory]` carrying 2 `[InlineData]`** across 15 test classes, and **no `[Trait]` anywhere**, so there is no scope partition here and no filtered gate |
 
 There is no example project in this repo — `ProphetsWay.Example` fills that role.
 
-**The library/test TFM split is deliberate.** The library ships no `net48` asset as of 3.1.0, but the test
-project keeps a `net48` leg because that is how .NET Framework *behavior* is verified —
-`Activator.CreateInstance<T>()` wraps a throwing constructor there and does not on .NET Core, which is the
-only reason `CreateEntity<T>()` in `BaseDataAccessHelper` has a catch block. That leg now binds the
-`netstandard2.0` asset, i.e. the exact assembly a .NET Framework consumer receives. Do not report the
-mismatch as drift.
+**The library/test TFM split is deliberate, and is unchanged by 3.2.0.** The library has shipped no
+`net48` asset since 3.1.0, but the test project keeps a `net48` leg because that is how .NET Framework
+*behavior* is verified — `Activator.CreateInstance<T>()` wraps a throwing constructor there and does not
+on .NET Core, which is the only reason `CreateEntity<T>()` in `BaseDataAccessHelper` has a catch block.
+That leg binds the `netstandard2.0` asset, i.e. the exact assembly a .NET Framework consumer receives.
+Do not report the mismatch as drift.
 
 ### Key Types
 
@@ -381,13 +429,27 @@ Namespace is `ProphetsWay.BaseDataAccess` throughout — correct for the Data Ac
 
 ### Known Deviations
 
-**None.** The test project and the canonical dotted monikers landed in 3.0.0, and 3.1.0 retargeted the
-library to `netstandard2.0;net10.0` — the current house standard. Every previously listed deviation is
-closed. Do not re-add filler entries here — an empty state is a real state.
+**None — re-checked 2026-08-23 rather than assumed, by opening both `.csproj` files, `app-variables.yml`
+and every file in the library.** The test project and the canonical dotted monikers landed in 3.0.0,
+3.1.0 retargeted the library to `netstandard2.0;net10.0`, and 3.2.0 filled the last packaging gap. Every
+previously listed deviation is closed and no new one was found. Do not re-add filler entries here — an
+empty state is a real state.
 
-One cosmetic non-deviation, recorded so it is not rediscovered: indentation in the library is mixed —
-four files use tabs, seven use four spaces. Both csproj files and the whole test project use tabs, there
-is no `.editorconfig`, and none of it is visible in the package. See `docs/repo-profile.md`.
+**Three things that look like deviations and are not.** Recorded so they are not rediscovered:
 
-Packaging metadata is **complete and correct** — use this repo's `.csproj` as the reference when
-fixing others.
+- **`<LangVersion>9.0</LangVersion>` and `<Nullable>annotations</Nullable>`** — deliberate, commented in
+  the csproj, and the reason EFTools could delete ten suppressions. See the 3.2.0 section above; the
+  shared block's blanket statement about nullable reference types is what needs correcting, not this.
+- **The empty `<PackageReleaseNotes />` element is build-critical.** The "Extract Release Notes from
+  CHANGELOG" step in `prophets-pipelines/stages/ci-build.yml` indexes
+  `GetElementsByTagName("PackageReleaseNotes")[0]` with no null guard — **deleting the element as dead
+  markup would fail the build.** It is *not* empty in this csproj today (it points at `CHANGELOG.md`),
+  but the hazard applies to any sibling repo where it is a stub.
+- **Indentation in the library is mixed** — four files use tabs, seven use four spaces. Both csproj files
+  and the whole test project use tabs, there is no `.editorconfig`, and none of it is visible in the
+  package. See `docs/repo-profile.md`.
+
+Packaging metadata is **complete and correct, and now includes Source Link** — use this repo's `.csproj`
+as the reference when fixing others. It is the only one in the workspace with `PublishRepositoryUrl`,
+`EmbedUntrackedSources`, `IncludeSymbols`, `SymbolPackageFormat` and a `TF_BUILD`-conditioned
+`ContinuousIntegrationBuild`.

@@ -14,6 +14,38 @@ in the `<remarks>` on
 [`DataAccessConventionException`](../ProphetsWay.BaseDataAccess/DataAccessConventionException.cs). Those
 are the source of truth. This file links to them and does not duplicate them, because duplicated rules drift.
 
+## Triage Pass — 2026-08-23
+
+**One entry closed; nothing else moved; nothing here is urgent.** Run by `Purpose Refiner` against the owner's
+stated goal of publishing `ProphetsWay.EFTools` and knowing these projects carry no work that must be built
+within a week.
+
+| Moved | Entry |
+| --- | --- |
+| `Scheduled` → **`Done`** | [8](#8--source-link-and-symbol-packages) — Source Link **and** symbol publication are both achieved. Symbols publish by `nuget.exe` 6.4.0 pushing a co-located `.snupkg`, not by a push step, and the pin that keeps that true is in `prophets-pipelines` |
+| Re-verified, **unchanged** | 9 and 11, both still genuinely unstarted — see below |
+| Not re-verified | 1–7, which are `Deferred` or `Rejected` by decision rather than by any fact about the current tree, and 10, closed in v3.2.0 |
+
+**One claim in this file was *wrong* rather than stale and is struck where it appears:** entry 8's *"the
+pipeline push step is still owed"*, repeated in the index and in the v3.2.0 eligibility table. There is no such
+step, one was written and reverted, and looking for it is a wasted afternoon. The entry's own *What is still
+owed* section is marked superseded in place rather than deleted, because its reasoning is sound and only its
+conclusion is not.
+
+**Entries 9 and 11 were checked against source rather than affirmed**, on this date:
+
+- **9 — still open.** `BaseDataAccessHelper.cs` throws `"The entity type [X] exposes neither a 'XId' nor an
+  'Id' property, so no identifier can be assigned to it."` The explicit-interface-implementation cause the
+  entry asks for is **documented** — it is in the `<remarks>` on `DataAccessConventionException`,
+  `IBaseIdEntity<T>`, `IBaseDataAccess.Get` and `BaseDataAccess.Get` — but it is **not in the message**, which
+  is what the entry is about.
+- **11 — still open.** `ProphetsWay.BaseDataAccess.csproj` reads `<Nullable>annotations</Nullable>`, not
+  `enable`, with `<LangVersion>9.0</LangVersion>` and `<TargetFrameworks>netstandard2.0;net10.0</TargetFrameworks>`.
+
+**Nothing in this index needs building within a week.** This library is published at 3.1.0, 3.2.0 is set and
+untagged, and the two open entries are a diagnostic message and a compiler-checked second pass — both
+improvements to a shipped, correct contract rather than defects in it.
+
 ## Index
 
 | # | Item | Status |
@@ -25,7 +57,7 @@ are the source of truth. This file links to them and does not duplicate them, be
 | 5 | [A standalone count capability](#5--a-standalone-count-capability) | **Rejected** — not deferred |
 | 6 | [Splitting transactions into `IBaseAccessWithTransactions`](#6--splitting-transactions-into-ibaseaccesswithtransactions) | Scheduled for a possible v4 |
 | 7 | [Making a swallowed rollback failure observable](#7--making-a-swallowed-rollback-failure-observable) | **Rejected** — not deferred |
-| 8 | [Source Link and symbol packages](#8--source-link-and-symbol-packages) | **Scheduled** — decline reversed; the csproj half is **built in v3.2.0**, the pipeline push step is still owed |
+| 8 | [Source Link and symbol packages](#8--source-link-and-symbol-packages) | **Done** — 2026-08-23. Decline reversed; the csproj half shipped in v3.2.0 and **symbols publish**. **The "pipeline push step is still owed" line is dead** — there is no such step and there does not need to be |
 | 9 | [A diagnosable `DataAccessConventionException` message for explicit interface implementation](#9--a-diagnosable-dataaccessconventionexception-message-for-explicit-interface-implementation) | **Proposed** — v3.2.0 at the earliest |
 | 10 | [Nullable reference type annotations on the public surface](#10--nullable-reference-type-annotations-on-the-public-surface) | **Done** — landed in v3.2.0, **before** EFTools shipped, by owner decision |
 | 11 | [`<Nullable>enable</Nullable>` — checking the annotations rather than asserting them](#11--nullableenablenullable--checking-the-annotations-rather-than-asserting-them) | **Proposed** — the second pass entry 10 deliberately scoped out |
@@ -87,7 +119,7 @@ runtime behaviour — which is what makes a MINOR bump correct rather than a MAJ
 | 5 | Rejected | n/a | Decided against |
 | 6 | Scheduled for a possible v4 | **No** | Binary-breaking by definition |
 | 7 | Rejected | n/a | Decided against |
-| 8 | **Scheduled** | **Half** | The csproj half is **in** — Source Link, `EmbedUntrackedSources`, `IncludeSymbols`, `snupkg`, CI-conditioned determinism, all verified from extracted artifacts. The `.snupkg` **push** step in `prophets-pipelines` is **not** done, so the symbol package is built but not proven to reach the feed |
+| 8 | **Done** | **Yes — in full** | ~~Half.~~ **Corrected 2026-08-23.** The csproj half is in — Source Link, `EmbedUntrackedSources`, `IncludeSymbols`, `snupkg`, CI-conditioned determinism, all verified from extracted artifacts. **The `.snupkg` also reaches the feed**, by the pin in `prophets-pipelines` rather than by a second push task. The sentence *"built but not proven to reach the feed"* is superseded — see the entry |
 | 9 | Proposed | **No** | A behaviour change needing a test-assertion change first. Still unstarted — v3.2.0 was its earliest eligible release, not a commitment to it |
 | 10 | **Done** | **Yes** | Landed in full. Metadata-only, non-breaking, and the whole public surface was annotated in one pass |
 | 11 | Proposed | **No** | Filed out of entry 10's closing measurement; it is a second, larger pass and nothing has been decided about it |
@@ -445,9 +477,54 @@ one-sentence purpose to admit it. That widening is now **moot**. The purpose sen
 
 ## 8 — Source Link and symbol packages
 
-**Status:** **Scheduled.** The decline is **reversed** — by the owner, and against evidence that killed the
-premise it rested on. **The csproj half is built and verified in v3.2.0. The pipeline push step is not done,
-so the symbol package is produced but not yet proven to reach the feed.** This entry stays open until it is.
+> **STATUS CHANGED 2026-08-23 — `Scheduled` → `Done`. Read this note before the section below titled *What is
+> still owed*, which is now wrong rather than merely stale.**
+>
+> **Both halves are achieved. The second one arrived by a different mechanism than this entry anticipated, and
+> the wording matters** — a reader who goes looking for the `.snupkg` push step described below will not find
+> one, and its absence is correct.
+>
+> **The csproj half**, re-verified by opening
+> [`ProphetsWay.BaseDataAccess.csproj`](../ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess.csproj) on
+> this date rather than affirmed from the table below: `<PublishRepositoryUrl>true</PublishRepositoryUrl>`,
+> `<EmbedUntrackedSources>true</EmbedUntrackedSources>`, `<IncludeSymbols>true</IncludeSymbols>` and
+> `<SymbolPackageFormat>snupkg</SymbolPackageFormat>` are present with values, and
+> `<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>` sits in its own `TF_BUILD`-conditioned
+> `PropertyGroup`, exactly as described.
+>
+> **The publication half — and this is the part that reversed.** This entry named the specific defect as
+> *"the shared template's `NuGetCommand@2` push step uses a `**/*.nupkg` pattern, and that pattern does not
+> match `.snupkg`."* **The pattern observation is still true and the conclusion drawn from it is false.**
+> `prophets-pipelines/stages/deploy-release.yml`, opened on this date, still pushes
+> `$(build.artifactstagingdirectory)/${{ parameters.PackageType }}/*.nupkg` — **and `nuget.exe` 6.4.0 pushes a
+> co-located `.snupkg` of its own accord**, without being named in the glob. Two things in that file exist to
+> hold that behaviour still, and both carry comments saying so:
+>
+> - a `NuGetToolInstaller@1` task **pinning the CLI to `6.4.0`**, because the hosted image's version is what
+>   decides whether the symbol package goes, so an image refresh could otherwise change what reaches the feed
+>   with no commit anywhere;
+> - the artifact download deliberately **not** narrowed to `*.nupkg`, because it is what puts the `.snupkg`
+>   beside its `.nupkg` for the push to find.
+>
+> **The evidence is a measurement, and it is not mine.** The template's own comment records the
+> `Push NuGet Alpha Package` log of **2026-08-23T04:45** showing an unprompted `PUT` to
+> `/api/v2/symbolpackage/` returning **`Created`**, for **3.2.0-504.Alpha**. **I opened the template and read
+> the pin and those comments; I did not open the build log.** So symbols are proven to publish for that build
+> by the owner's measurement, recorded in the artifact that keeps it true.
+>
+> **A pipeline push step was in fact written** — `prophets-pipelines` commit `63dd56b` — **and then
+> substantially reverted the same day**, once the automatic behaviour was measured. That is why the code this
+> entry asks for does not exist: it was built, found redundant, and removed. Recorded so nobody restores it.
+>
+> **One residual risk, accepted rather than closed, and it belongs to `prophets-pipelines` not here.** The
+> symbol half rides **inside** the fatal `.nupkg` push, so a feed with no symbol endpoint would fail that push
+> with the `.nupkg` already public — stranding the version. The template comments the tradeoff and forbids
+> `continueOnError`. It is not a defect in this library and no entry here tracks it.
+
+**Status:** ~~**Scheduled.**~~ **Done — 2026-08-23.** The decline is **reversed** — by the owner, and against evidence that killed the
+premise it rested on. **The csproj half is built and verified in v3.2.0, and the symbol package is published by
+the shared templates.** The section below headed *What is still owed* describes a step that no longer needs to
+exist; it is kept as the record of what was believed and why it turned out otherwise.
 
 `Repo Analyst` recommended enabling Source Link and publishing a `.snupkg` alongside the package. The argument
 is a good one and specific to this library: the XML `<remarks>` on `IBaseDataAccess` and
@@ -521,6 +598,11 @@ one of these properties is the kind that can be present and still not take effec
 Two PDBs because the library multi-targets `netstandard2.0;net10.0`; both assets are covered.
 
 ### What is still owed — do not read this entry as closed
+
+> **SUPERSEDED 2026-08-23. Nothing below is owed, and the entry *is* closed.** The paragraphs are kept intact
+> because the reasoning in them is sound and only the conclusion is wrong — the glob genuinely does not match
+> `.snupkg`, and it genuinely does not need to. **Read the status note at the top of this entry before acting
+> on anything in this section.**
 
 **The `.snupkg` is built. Nothing pushes it.** The note originally filed here is still live and is the reason
 this entry is `Scheduled` rather than `Done`:

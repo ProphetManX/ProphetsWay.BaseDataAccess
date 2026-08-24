@@ -106,11 +106,22 @@ resolution that produced it, rather than inferring it from the message. That mat
 packages, because the XML documentation on ```IBaseDataAccess``` and ```DataAccessConventionException``` is a
 large part of what this library actually is.
 
-**One honest caveat: the ```.snupkg``` is produced but is not yet pushed to the feed.** The publish step in the
-shared pipeline still pushes ```*.nupkg``` only, so do not expect symbols to be available for download until
-that lands. ```ContinuousIntegrationBuild``` is switched on only under ```TF_BUILD```, so the deterministic path
-rewriting applies to the official build and does not degrade local debugging. **No ```PackageReference``` was
-added** — Source Link ships inside the SDK — so this package still has no package dependencies at all.
+**And the symbols reach the feed — this was measured, not assumed.** The alpha of this release,
+```3.2.0-504.Alpha```, published both halves on 2026-08-23. The publish step's log shows the ```.nupkg``` push
+returning ```Created```, and then, from the same command and unprompted, the co-located ```.snupkg``` pushed to
+the symbol endpoint and also returning ```Created```. The command line named only the ```.nupkg```.
+
+**Word that carefully if you go looking for how, because there is no symbol-push step to find.** Publication
+comes from a pinned ```nuget.exe``` 6.4.0 in the shared pipeline: at that version a single push of a ```.nupkg```
+also pushes an adjacent ```.snupkg```, and the version is pinned precisely so a hosted-image refresh cannot
+change what reaches the feed without a commit anywhere. An explicit push task was written and then substantially
+reverted the same day — it was redundant, and it failed ```409 Conflict``` against symbols the ordinary push had
+uploaded roughly two hundred milliseconds earlier. The push glob is unchanged and is not a defect.
+
+```ContinuousIntegrationBuild``` is switched on only under ```TF_BUILD```, so the deterministic path rewriting
+applies to the official build and does not degrade local debugging. **No ```PackageReference``` was added** —
+Source Link ships inside the SDK — so this package still has no package dependencies at all.
+
 
 ### Packaging metadata
 ```<NeutralLanguage>``` now carries ```en-US``` and ```<PackageReleaseNotes>``` points at this changelog, both

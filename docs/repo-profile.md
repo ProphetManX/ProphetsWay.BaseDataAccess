@@ -1,7 +1,22 @@
 # Repo Profile — ProphetsWay.BaseDataAccess
 
-_Generated 2026-08-13. Evidence-based; every claim cites a source file. Analyzed against the working tree of
-branch `net-10-update` (PR #39), which retargets the library._
+_Generated 2026-08-13 against branch `net-10-update` (PR #39). **Amended 2026-08-23 for v3.2.0**, which
+has since shipped and is live on nuget.org. Evidence-based; every claim cites a source file._
+
+> **Amended 2026-08-23.** The previous edition described a tree that no longer exists in three places,
+> each corrected below against the file that was opened rather than affirmed:
+>
+> - **"`LangVersion` is not set in either project"** — false. The library pins
+>   `<LangVersion>9.0</LangVersion>` and sets `<Nullable>annotations</Nullable>`.
+> - **"`PublishRepositoryUrl` / `EmbedUntrackedSources` / SourceLink — absent"** and **"`IncludeSymbols`
+>   / `SymbolPackageFormat` — absent"** — false. All four are present, plus a `TF_BUILD`-conditioned
+>   `ContinuousIntegrationBuild`. The *proposed* XML this document carried has landed, **in a different
+>   form**: no `PackageReference` was needed or added.
+> - **"Gap 2 — No Source Link or symbol package"** — closed. [FR 8](feature-requests.md) is
+>   `Done — 2026-08-23`.
+>
+> **The 116-test figure and the eleven-source-file figure both survived re-derivation** and are stated
+> below with the method used. `app-variables.yml` reads **3.2.0**.
 
 This profile is **factual and structural** — API inventory, packaging, target frameworks, test coverage.
 Purpose, scope, cohesion, and extraction analysis live in [docs/purpose-and-scope.md](purpose-and-scope.md);
@@ -146,9 +161,29 @@ No Moq, no FluentAssertions. House convention satisfied.
 3. Now that the library ships no `net48` asset, the `net48` test leg binds `netstandard2.0` — meaning it
    validates the exact assembly a .NET Framework consumer actually receives rather than a sibling build.
 
-`LangVersion` is **not set** in either project. `netstandard2.0` therefore defaults to C# 7.3, and because
-that constraint applies to shared code in a multi-targeted project, the whole library is written at 7.3. This
-is a consequence of the reach floor, not an oversight, and it is why nullable reference types are absent.
+**`LangVersion` is pinned at `9.0` in the library and unset in the test project** — read from
+[the csproj](../ProphetsWay.BaseDataAccess/ProphetsWay.BaseDataAccess.csproj) on 2026-08-23. **The
+previous edition's "`LangVersion` is not set in either project" is false and must not be restated**, and
+neither may the conclusion it drew — that "nullable reference types are absent" because `netstandard2.0`
+caps shared code at C# 7.3.
+
+The csproj comments both properties on the line above each:
+
+| Property | Value | Stated reason |
+| --- | --- | --- |
+| `LangVersion` | `9.0` | "the minimum that allows `T?` on a type parameter constrained only by an interface" |
+| `Nullable` | `annotations` | "annotations, not enable: publish nullability to consumers without turning warnings on inside the library" |
+
+**`LangVersion` is independent of the target framework**, and nullable *annotations* need no BCL support
+— `NullableAttribute` is emitted into the assembly. So a `netstandard2.0` asset can and does carry them.
+What 7.3 would have blocked is a *language feature* requiring newer syntax, which is why the pin exists.
+
+**`annotations` is not a half-finished `enable`.** It publishes nullability to consumers while leaving
+the library's own compilation warning-free, which is the correct shape for a contracts package — and it
+is what let `ProphetsWay.EFTools` delete ten `CS8766` suppression pairs, because 3.1.0 shipped
+null-oblivious and the compiler could not check what those pragmas were silencing.
+[FR 10](feature-requests.md) is `Done`; [FR 11](feature-requests.md), which asks for `enable`, is
+`Proposed` with **no owner decision taken**.
 
 No end-of-life or redundant TFM is present. **No change recommended.**
 
@@ -188,53 +223,65 @@ markup to anyone tidying the file.
 | `GenerateDocumentationFile` | **present** | `true` — the XML docs, which are the contract, ship in the package |
 | `PackageProjectUrl` | **present** | `https://github.com/ProphetManX/ProphetsWay.BaseDataAccess` — previously an empty stub; populated |
 | `Copyright` | **present** | `Copyright © Prophet's Way` — previously an empty stub; populated |
-| `NeutralLanguage` | **empty** | Inert; no practical consequence |
-| `PublishRepositoryUrl` / `EmbedUntrackedSources` / SourceLink | **absent** | No Source Link. Consumers cannot step into library source while debugging |
-| `IncludeSymbols` / `SymbolPackageFormat` | **absent** | No `.snupkg`; no symbol server support |
-| `ContinuousIntegrationBuild` / `Deterministic` | **absent** | Builds are not marked deterministic/CI |
+| `NeutralLanguage` | **present** | `en-US` — previously empty; populated |
+| `PublishRepositoryUrl` / `EmbedUntrackedSources` / SourceLink | **present** | Both properties `true`. **No `PackageReference` — `Microsoft.SourceLink.GitHub` ships inside SDK 10.0.400, with the `buildMultiTargeting\` assets a multi-targeted project needs.** The zero-package-reference property is intact |
+| `IncludeSymbols` / `SymbolPackageFormat` | **present** | `true` / `snupkg` |
+| `ContinuousIntegrationBuild` | **present, `TF_BUILD`-conditioned** | Its own `PropertyGroup` with `Condition="'$(TF_BUILD)' == 'true'"`, so deterministic paths apply in CI only — unconditionally on, it breaks local debugging |
 | `ApplicationIcon` / `Win32Resource` | **empty** | Inert leftovers from the original template |
 
-Three gaps were worth acting on. **Two are now closed** — `PackageProjectUrl` and `Copyright` have been
-populated in the csproj, so the only remaining gap is the first. Proposed XML follows; **it has not been
-applied.**
+**Every gap this document previously raised is now closed. Nothing is proposed.** All three landed:
+`PackageProjectUrl`, `Copyright`, and — in v3.2.0 — Source Link plus symbols.
 
-**1 — Source Link + symbols.** The highest-value gap by a distance. This library's entire value is its
-documented contract, and a consumer hitting a `DataAccessConventionException` benefits enormously from
-stepping into `BaseDataAccessHelper` to see which of the three circumstances fired. Insert into the existing
-`PropertyGroup`, plus one `PackageReference`:
+### 1 — Source Link + symbols. **CLOSED in v3.2.0**, and not in the shape this document proposed
+
+What is actually in the csproj, read on 2026-08-23:
 
 ```xml
-<!-- PROPOSED — not applied -->
+<!-- Source Link. Microsoft.SourceLink.GitHub ships inside the SDK, so no PackageReference is needed. -->
 <PublishRepositoryUrl>true</PublishRepositoryUrl>
 <EmbedUntrackedSources>true</EmbedUntrackedSources>
 <IncludeSymbols>true</IncludeSymbols>
 <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-<ContinuousIntegrationBuild Condition="'$(TF_BUILD)' == 'true'">true</ContinuousIntegrationBuild>
 ```
 
 ```xml
-<!-- PROPOSED — not applied. New ItemGroup, before the existing packing ItemGroup. -->
-<ItemGroup>
-	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
-</ItemGroup>
+<!-- Deterministic build paths in CI only; unconditionally on, it breaks local debugging. -->
+<PropertyGroup Condition="'$(TF_BUILD)' == 'true'">
+	<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+</PropertyGroup>
 ```
 
-Note the tradeoff honestly: this adds the library's **first and only** `PackageReference`. It is
-`PrivateAssets="All"` and a build-time analyzer package, so nothing flows to consumers and the "zero
-dependencies" property of the shipped package is preserved — but the csproj stops being dependency-free, and
-that is a judgment call the owner should make rather than have made for them.
+**The `Microsoft.SourceLink.GitHub` `PackageReference` this document proposed was not added and was not
+needed.** It ships inside SDK 10.0.400 at `sdk\10.0.400\Sdks\Microsoft.SourceLink.GitHub\`, carrying both
+`build\` and `buildMultiTargeting\`. The tradeoff this document flagged honestly — that the csproj would
+stop being dependency-free — **turned out not to exist**, and that is what reversed the owner's decline.
+The library still has **zero `PackageReference` entries**. [FR 8](feature-requests.md) is
+`Done — 2026-08-23`.
 
-**2 — `PackageProjectUrl`. CLOSED.** Now
-`https://github.com/ProphetManX/ProphetsWay.BaseDataAccess` in the csproj.
+**Symbols publish — and the mechanism is not a push step. Word this carefully.** The shared template's
+`NuGetCommand@2` still pushes `$(build.artifactstagingdirectory)/{PackageType}/*.nupkg`, and
+**`nuget.exe` 6.4.0 pushes a co-located `.snupkg` of its own accord** without being named in the glob.
+Two things in `prophets-pipelines/stages/deploy-release.yml` hold that still: a `NuGetToolInstaller@1`
+**pinning the CLI to 6.4.0**, and an artifact download deliberately *not* narrowed to `*.nupkg`. The
+evidence is the owner's `Push NuGet Alpha Package` log of **2026-08-23T04:45**, showing an unprompted
+`PUT` to `/api/v2/symbolpackage/` returning **`Created`** for `3.2.0-504.Alpha`. **A push step was
+written (`63dd56b`) and substantially reverted the same day (`6110d69`).** Do not go looking for it and
+do not restore it.
 
-**3 — `Copyright`. CLOSED.** Now `Copyright © Prophet's Way` in the csproj.
+### 2 — `PackageProjectUrl`. **CLOSED.**
+
+### 3 — `Copyright`. **CLOSED.**
 
 ## Test Suite
 
-**116 test cases** across 15 test classes — 115 xUnit attributes, of which 114 are `[Fact]` and one is a
-`[Theory]` with two `[InlineData]` rows
+**116 test cases** across 15 test classes — **re-derived 2026-08-23 by grepping every xUnit attribute in
+the project, not carried**: 115 attributes, of which **114 are `[Fact]`** and one is a **`[Theory]` with
+two `[InlineData]` rows**
 ([BaseDataAccessIdentifierRejectionTests.cs](../ProphetsWay.BaseDataAccess.Tests/BaseDataAccessIdentifierRejectionTests.cs)
-line 54). Two TFMs × 116 = **232 executions**. [CHANGELOG.md](../CHANGELOG.md) records 116 for v3.1.0, which matches the current suite, including the explicit-implementation characterization test.
+line 54). There is **no `[MemberData]`, no `[ClassData]` and no `[Trait]` anywhere in the project**, so
+there is no scope partition here and no filtered conformance gate — unlike `ProphetsWay.Example`. Two TFMs
+× 116 = **232 executions**. [CHANGELOG.md](../CHANGELOG.md) records 116 under **both** `v3.1.0` and
+`v3.2.0`, which matches.
 
 xUnit + Shouldly, tabs, Allman, `//setup` / `//act` / `//assert` comment structure throughout. Test class
 names describe the behavior area rather than mirroring a single type — a deliberate departure from
@@ -328,6 +375,21 @@ fixtures rather than samples.
 
 **The one stale line has since been fixed.** No README defect remains as of the 2026-08-16 re-check.
 
+## CHANGELOG Accuracy Check — one measurably false claim, 2026-08-23
+
+`CHANGELOG.md` is owned by `Changelog Author`; **nothing in this pass edited it.** Its newest heading is
+**`v3.2.0`**, matching `app-variables.yml`.
+
+| Existing claim | Verdict | Evidence |
+| --- | --- | --- |
+| "Source Link and symbol packages are on: `PublishRepositoryUrl`, `EmbedUntrackedSources`, `IncludeSymbols`, and `SymbolPackageFormat` set to `snupkg`" | **Accurate** | All four read from the csproj |
+| "**no package reference was added** — Source Link ships inside the SDK — so this package still has no package dependencies at all" | **Accurate** | The csproj has no `PackageReference` at all |
+| "All 116 tests pass on both `net48` and `net10.0`" | **Accurate — count re-derived** | 114 `[Fact]` + 2 `[InlineData]` = 116 |
+| **"One honest caveat: the `.snupkg` is produced but is not yet pushed to the feed. The publish step in the shared pipeline still pushes `*.nupkg` only, so do not expect symbols to be available for download…"** (lines 109–111) | **FALSE as of 2026-08-23** | The glob observation is still true and **the conclusion drawn from it is wrong**. `nuget.exe` 6.4.0 pushes the co-located `.snupkg` unprompted; the owner's `Push NuGet Alpha Package` log of 2026-08-23T04:45 shows a `PUT` to `/api/v2/symbolpackage/` returning **`Created`** for `3.2.0-504.Alpha`. `prophets-pipelines` pins the CLI to 6.4.0 precisely to keep that true. **Symbols *are* on the feed for 3.2.0** |
+
+**That last row is the highest-value item for `Changelog Author` in this repo**, because it is a
+published statement that tells a consumer not to look for something that is there.
+
 ## Gaps & Observations
 
 Ordered by consequence. None of these is a defect in behavior.
@@ -339,8 +401,11 @@ Ordered by consequence. None of these is a defect in behavior.
    per-repo section was corrected earlier. No document in the repo still carries
    `netstandard2.0;net48;net8.0;net9.0`.
 
-2. **No Source Link or symbol package.** See the Packaging Audit. For a library whose XML documentation *is*
-   the product, being unable to step into it is a real cost.
+2. ~~**No Source Link or symbol package.**~~ **CLOSED in v3.2.0 — verified 2026-08-23 by opening the
+   csproj.** All four properties are present, `ContinuousIntegrationBuild` is `TF_BUILD`-conditioned, and
+   **no `PackageReference` was added** — Source Link ships inside SDK 10.0.400. Symbols publish by way of
+   the `nuget.exe` 6.4.0 pin in `prophets-pipelines`, **not** a `.snupkg` push step; see the Packaging
+   Audit. [FR 8](feature-requests.md) is `Done`. Do not re-report this.
 
 3. **Indentation is mixed across the library.** Four files use tabs
    ([IBaseDataAccess.cs](../ProphetsWay.BaseDataAccess/IBaseDataAccess.cs),
@@ -362,28 +427,47 @@ Ordered by consequence. None of these is a defect in behavior.
    fails if it changes.
 
 5. **The empty `<PackageReleaseNotes />` is a build-critical element that looks like dead markup.** The
-   pipeline indexes `GetElementsByTagName("PackageReleaseNotes")[0]` with no guard. Nothing in the csproj says
-   so. A one-line comment beside it would prevent a plausible and confusing CI failure.
+   pipeline indexes `GetElementsByTagName("PackageReleaseNotes")[0]` with no guard. **In *this* csproj the
+   element is no longer empty** — it points at `CHANGELOG.md` — but the hazard is unchanged for any sibling
+   repo where it is still a stub, and the element must stay present here regardless.
 
-6. **`ProphetsWay.EFTools` has not picked up 3.x.** Not a defect in this repo, but this is the root of the
-   Data Access family and its primary implementation is behind. Coordination item, tracked in the Example
-   repo's AGENTS.md.
+6. ~~**`ProphetsWay.EFTools` has not picked up 3.x.**~~ **CLOSED 2026-08-23.** Both
+   `ProphetsWay.EFTools.csproj` and `ProphetsWay.Example.DataAccess.EF.csproj` reference
+   `ProphetsWay.BaseDataAccess` **3.2.0**, and EFTools' suite runs **270 / 270 / 0** against these
+   contracts. Its `0da679f` deleted **ten `CS8766` suppression pairs** made unnecessary by 3.2.0's nullable
+   annotations — which is the most concrete evidence available that this release did what it was for. What
+   remains is EFTools' own tag and publish, not anything owed by this repo.
+
+7. **A shared-block generalization is now demonstrably wrong, and it is not this repo's to fix.** The
+   Target Frameworks section of the generated block states that `netstandard2.0` defaults to C# 7.3 and
+   that this "is why nullable reference types do not work in these libraries regardless of what a csproj
+   claims." This library ships nullable **annotations** on a `netstandard2.0` asset today. The master copy
+   is `prophets-pipelines/conventions/AGENTS.shared.md`, and a change there propagates to seven repos — it
+   needs an owner decision and a `/sync-agents-md` run, not a hand edit.
 
 ## Open Questions for the Owner
 
-1. **Is adding `Microsoft.SourceLink.GitHub` acceptable?** It is `PrivateAssets="All"`, so the shipped package
-   keeps its zero-dependency property — but it would be the csproj's first `PackageReference`, and "no package
-   references at all" is currently a stated selling point in the v3.1.0 changelog. Worth deciding
-   deliberately rather than by default.
+1. ~~**Is adding `Microsoft.SourceLink.GitHub` acceptable?**~~ **ANSWERED and moot.** The owner reversed
+   the decline, and the premise turned out to be false: Source Link ships inside SDK 10.0.400, so **no
+   `PackageReference` was added** and the zero-dependency property was never at risk. Landed in v3.2.0.
 
 2. **Does the `PackageProjectUrl` / `Copyright` fix belong in the sibling repos?** **Answered for this repo**
-   — both are now populated. AGENTS.md calls this repo's csproj the reference other repos should copy, so the
-   same two elements are presumably still empty stubs elsewhere and worth a sweep.
+   — both are now populated, as is `NeutralLanguage`. AGENTS.md calls this repo's csproj the reference other
+   repos should copy, and that is now more true than before: it is the only one in the workspace carrying
+   Source Link. `ProphetsWay.EFTools` is the known laggard — its deviation 5 / FR 16 records the same gaps,
+   explicitly **not** release-blocking.
 
 3. **Is the DAO inheritance graph worth pinning with a test?** `UNKNOWN — needs owner input`. A handful of
    compile-time assertions (`typeof(IBasePagedDao<Company>).ShouldBeAssignableTo<IBaseDao<Company>>()`) would
    catch an accidental change here rather than in EFTools. It may equally be judged as testing the compiler.
 
-4. **Should the `<PackageReleaseNotes />` dependency be commented in the csproj, or hardened in the pipeline?**
-   Either fixes it; the pipeline fix (`if` guard before the index) protects all seven repos, the comment
-   protects one.
+4. **Should the `<PackageReleaseNotes />` dependency be hardened in the pipeline?** It is populated here now,
+   so this repo is safe either way — but the pipeline fix (an `if` guard before the index) protects all seven
+   repos, and some of them still carry the empty stub.
+
+5. **Does `<Nullable>enable</Nullable>` follow?** [FR 11](feature-requests.md) is `Proposed` with **no owner
+   decision taken**. `annotations` is a complete and correct end state for a contracts package; `enable`
+   would be a further step, not a completion of this one. Do not treat the current state as half-finished.
+
+6. **Who corrects the shared block's nullable generalization?** See gap 7. It needs an owner decision and a
+   `/sync-agents-md` run — no agent may hand-edit a generated block.
