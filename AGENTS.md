@@ -3,7 +3,7 @@
 <!-- ═══════════════════════════════════════════════════════════════════════
      BEGIN SHARED BLOCK
      Generated from prophets-pipelines/conventions/AGENTS.shared.md
-     DO NOT EDIT BY HAND — run /sync-agents-md to regenerate.
+     DO NOT EDIT BY HAND — use pw-suite-maintenance to synchronize.
      ═══════════════════════════════════════════════════════════════════════ -->
 
 ## About This Codebase
@@ -239,32 +239,32 @@ the project header and sidecars are what change.
 
 ## Rules for Agents
 
-- **Never edit `.cs`, `.csproj`, `.sln`, or `.yml`** unless the human explicitly asks in that turn.
-  Propose changes as fenced snippets labeled `PROPOSED — not applied`.
-- **Exception — the TDD agents.** `Interface Architect`, `Test Designer`, `Implementer`, and
-  `Refactorer` exist to write code; invoking one *is* the explicit ask. Each is restricted to one
-  kind of file, and those restrictions are load-bearing:
+- **Default to read-only without an owner-approved assignment.** Do not edit `.cs`, `.csproj`,
+  `.sln`, `.yml`, or other product artifacts merely because a change was suggested.
+- **V3 scoped delivery.** An owner-approved assignment may be delegated by `PW - Lead` without
+  another human message for every worker turn. Each delegation must carry the approved behavior,
+  exact allowed paths, checks, evidence destination and stopping boundary. Invoking a role is not
+  blanket permission to change product behavior or perform unapproved operations.
 
   | Agent | May write |
   |---|---|
-  | `Interface Architect` | Interfaces and their supporting types — never tests, never implementations |
-  | `API Designer` | HTTP contracts and `docs/api/` — never implementations |
-  | `Test Designer` | `*Tests.cs` only |
-  | `Implementer` | Implementation `.cs` only — **never** a test file |
-  | `Refactorer` | Implementation `.cs` only, behavior-preserving — **never** a test file |
-  | `Modernizer` | `.csproj` / `.sqlproj` build and packaging config — never versions, never namespaces |
-  | `Pipeline Engineer` | `.yml` / `.yaml` only — never versions, secrets, project files, or Markdown |
-  | `Changelog Author` | `CHANGELOG.md` only |
-  | `Threat Modeler`, `Security Reviewer` | `docs/security/` only — read-only on source |
+  | `PW - Lead` | Assignment state and handoffs; delegates product/test authoring and independent review |
+  | `PW - Design` | Requirements, decisions and design documents — never production code or tests |
+  | `PW - Investigate` | Assigned diagnostic findings — never a production fix |
+  | `PW - Tests` | Approved tests, fixtures and explicitly scoped test-project configuration — never production code |
+  | `PW - Build` | Approved production contracts and implementation, including `.cs`, `.sql`, explicitly scoped `.xml`, assigned project/build configuration, examples and docs — **never** tests |
+  | `PW - Review` | Independent review findings — never the reviewed artifacts |
 
-  If an agent edits a test to make it pass, the workflow has failed. Report it rather than
-  accepting the green build.
+  Only the test author may make a justified, independently reviewed correction to a specification.
+  An implementer changing a test to make it pass is a workflow failure, not a green build.
+  Retired v1/v2 role definitions remain historical reference, not current write authority.
 - **Never bump a version** in `app-variables.yml`. That is a human decision.
 - **Never invent an Azure DevOps `definitionId`.** Badge URLs must be copied from a file that
   already exists in the repo. If one is missing, ask.
 - **Feature requests are shared-capture, single-owner triage.** The owner or any agent may append a
   `Proposed` entry to `docs/feature-requests.md`, but must read the index first and extend an existing
-  entry instead of duplicating it. Only `Purpose Refiner` may change status. Never delete or renumber
+  entry instead of duplicating it. Only `PW - Design` may change triage status, recording the
+  owner's decision or an explicitly delegated decision authority. Never delete or renumber
   entries; rejected requests remain with their reasoning, and new numbers increase monotonically.
 - **A namespace change is a binary-breaking change.** Never make one casually; it requires a major
   version bump and a CHANGELOG entry.
